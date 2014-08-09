@@ -1,0 +1,40 @@
+
+{{title:OSS}}
+
+{{projectname:OSS}}
+
+{{find}}
+
+{{menu:
+System:/System
+Help:/Help
+}}
+
+{{menuadmin_oss}}
+@col 3
+{{navigation}}
+@divend
+
+{{cssstyle
+    .dataTables_wrapper{
+        max-width: 100%;
+    }
+    .span6{
+        width:46.5% !important;
+    }
+}}
+@col 9
+{content}
+
+@divend
+@divend
+
+#{{cssstyle
+#td {
+#    max-width:500px;
+#    overflow: hidden;
+#    text-overflow: ellipsis;
+#    white-space: nowrap;}
+#}}
+
+
