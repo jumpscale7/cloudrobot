@@ -2,8 +2,10 @@
 from JumpScale import j
 
 import sys
-args=sys.argv
-instance=args[1]
+# args=sys.argv
+# instance=args[1]
+
+instance=0
 
 jp=j.packages.findNewest(name="cloudrobot",domain="serverapps")
 jp=jp.load(instance=instance)
