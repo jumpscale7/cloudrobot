@@ -12,6 +12,9 @@ args=sys.argv
 
 from robots import *
 
-j.servers.cloudrobot.startXMPPRobot(args[1],args[2],robots=robots)
+login=j.servers.cloudrobot.hrd.get("cloudrobot.xmpp.login")
+passwd=j.servers.cloudrobot.hrd.get("cloudrobot.xmpp.passwd")
+
+j.servers.cloudrobot.startXMPPRobot(login,passwd,robots=robots)
 
 j.application.stop(0)
