@@ -2,15 +2,15 @@
   /*height: 202px;*/
   border: 1px solid rgb(209, 209, 209); 
   margin: auto; 
-  font-size: 16px; 
+  font-size: 15px; 
   border-radius: 5px;
 /*  overflow: visible;*/
 }
 #codeArea .CodeMirror-scroll { 
-  max-height: 282px;
+  /*max-height: 282px;*/
 }
 #executeOncecodeWrap .CodeMirror-scroll { 
-  max-height: 382px;
+  /*max-height: 382px;*/
 }
 .CodeMirror pre { 
   padding-left: 7px; 
@@ -36,7 +36,7 @@
 .channels-tree{
   border: 1px solid rgb(209, 209, 209);
   padding: 10px 0;
-  height: 500px;
+  height: 720px;
   border-radius: 5px;
   overflow-y: scroll;
   overflow-x: inherit;
@@ -48,7 +48,6 @@ div[data-angular-treeview] {
   -ms-user-select: none;
   user-select: none;
   font-family: Tahoma;
-  font-size:13px;
   color: #555;
   text-decoration: none;
 }
@@ -59,7 +58,7 @@ div[data-tree-model] ul {
   list-style: none; 
   border: none;
   overflow: hidden;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 div[data-tree-model] li {
@@ -105,7 +104,7 @@ html, body {height: 100%;}
   /*padding-bottom: 20px;*/
 }
 #footer {position: relative;
-  margin-top: -30px; /* negative value of footer height */
+  margin-top: -10px; /* negative value of footer height */
   height: 30px;
   clear:both;
 } 
@@ -129,7 +128,7 @@ html, body {height: 100%;}
 }
 .navbar-brand{
   line-height: .6em !important;
-  font-size: 23px !important;
+  font-size: 21px !important;
 }
 .navbar-collapse.collapse{
   height: 40px !important;
@@ -143,12 +142,12 @@ html, body {height: 100%;}
   opacity:0;
 }
 .table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td{
-  font-size: 15px;
+  font-size: 14px;
 }
 .table > thead:first-child > tr:first-child > th{
   background-color: #1abc9c;
   color: #b7f5e9;
-  font-size: 16px;
+  font-size: 15px;
 }
 .table{
   border: 1px solid rgb(216, 215, 215);
@@ -171,4 +170,46 @@ html, body {height: 100%;}
 }
 #executeOncecodeWrapper .CodeMirror-gutter.CodeMirror-linenumbers{
   width: 28px !important;
+}
+select{
+  border: 2px solid #BDC3C7;
+  font-size: 14px;
+  border-radius: 5px;
+  height: 35px; 
+  padding-left: 5px; 
+  width: 100%; 
+  margin-bottom: 10px;
+}
+h1{
+  font-size: 22px;
+}
+h6, .h6{
+  font-size: 20px;
+}
+.modal-body{
+  font-size: 15px;
+}
+.cancel-btn{
+  font-size: 12px;
+  color: #428bca;
+  float: left;
+  margin-top: 5px;
+}
+b, strong{
+  font-size: 15px;
+}
+.pagination a{
+  font-size: 13px;
+}
+.table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td{
+  padding: 5px !important;
+}
+.pagination ul li.active > a, .pagination ul li.active > span{
+  margin: 5px 5px 13px;
+}
+.pagination ul li > a, .pagination ul li > span{
+  margin: 0px 2px 10px;
+}
+.pagination ul{
+  height: 31px;
 }

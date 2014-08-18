@@ -20,9 +20,9 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                   return reason;
               });
         },
-        set: function(snippetName, channel, snippet, secrets) {
-            return $http.get( '/restmachine/system/robot/rscript.set?secrets=' + secrets + '&name=' +  snippetName + "&channel=" + channel + '&rscript='
-              + snippet).then(
+        set: function(snippetName, channel, snippet, secrets, secrets2access) {
+            return $http.get( '/restmachine/system/robot/rscript.set?secrets=' + secrets + '&name=' +  snippetName + "&channel=" + channel + '&content='
+              + snippet + '&secrets2access=' + secrets2access).then(
               function(result) {
                   return result;
               },
@@ -30,8 +30,8 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                   return reason;
               });
         },
-        execute: function(snippetName, channel, secrets, wait) {
-            return $http.get( '/restmachine/system/robot/rscript.execute?secrets=' + secrets + '&name=' +  snippetName + "&channel=" + channel + '&wait=' + wait).then(
+        execute: function(snippetName, channel, secrets, wait, content) {
+            return $http.get( '/restmachine/system/robot/rscript.execute?secrets=' + secrets + '&name=' +  snippetName + "&channel=" + channel + '&wait=' + wait + '&content=' + content).then(
               function(result) {
                   return result;
               },
@@ -40,7 +40,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
               });
         },
         executeOnce: function(rscript, snippetName, channel, wait) {
-            return $http.get( '/restmachine/system/robot/rscript.execute.once?rscript=' + rscript + '&name=' +  snippetName + "&channel=" + channel + '&wait=' + wait).then(
+            return $http.get( '/restmachine/system/robot/rscript.execute.once?content=' + rscript + '&name=' +  snippetName + "&channel=" + channel + '&wait=' + wait).then(
               function(result) {
                   return result;
               },
@@ -176,7 +176,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
         usSpinnerService.stop('spinner');
       }, 1000);
       $scope.bulidJobList = "";
-      $scope.waitFlag = 0;
+      $scope.waitFlag = 1;
       $scope.saveSecret = function () {
         if($scope.secretcodes == undefined){
           $scope.secretcodes = null;
@@ -207,10 +207,15 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
       $scope.closeModal = function () {
         $('#showSecretModal').modal('hide');
         $('#jobDetailModal').modal('hide');
+        $('#executeResultModal').modal('hide');
+        $('#deleteRscriptModal').modal('hide');
       };
       $scope.logout = function () {
         localStorage.removeItem('user');
         localStorage.removeItem('secretcodes');
+        localStorage.removeItem('channelFilter');
+        localStorage.removeItem('rscriptNameFilter');
+        localStorage.removeItem('timeRangeFilter');
         $scope.user = "";
         $scope.secretcodes = "";
         $window.location.href = '/system/login?user_logoff_=1';
@@ -256,6 +261,9 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
       });
       $scope.buildTreeView = function buildTreeView(channelFilter) {
         usSpinnerService.spin('spinner');
+        if(!$scope.secretcodes){
+          $scope.secretcodes = "''";
+        }
         rScript.channelTree($scope.secretcodes).then(
               function (result) {
                 if(result.status =! 200){
@@ -287,6 +295,9 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
         },function (reason) {
             $scope.errorAlert = reason;
         });
+        if($scope.secretcodes == "''"){
+          $scope.secretcodes = "";
+        }
         $timeout(function() {  
           usSpinnerService.stop('spinner');
         }, 1000);
@@ -305,7 +316,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
         });
       }
       if (editor) {
-        editor.setSize(555, 272);
+        editor.setSize('100%', '100%');
       };
       // var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
       //   lineNumbers: true,
@@ -321,8 +332,10 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
             $scope.snippetMsg = "Please select code snippet first."
             $timeout(function() {$scope.snippetMsg = "";}, 7000);
           }else{
+            $scope.jobinfo = "";
+            $scope.jobid = "";
             usSpinnerService.spin('spinner');
-            rScript.execute($scope.currentsnippetObject.name, $scope.currentsnippetObject.channel, $scope.mySercretsInSnippet, $scope.waitFlag).then(
+            rScript.execute($scope.currentsnippetObject.name, $scope.currentsnippetObject.channel, $scope.mySercretsInSnippet, $scope.waitFlag, editor.getValue()).then(
             function (result) {
               $scope.datalogObject = "";
               if(result.status != 200){
@@ -335,6 +348,8 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                     $scope.snippetMsg = $scope.currentsnippetObject.name + " executed successfully.";
                     $timeout(function() {$scope.snippetMsg = "";}, 7000);
                     $scope.jobid = result.data;
+                    $('#executeResultModal').modal('show');
+                    $scope.showExecuteResultLink = true;
                     $timeout(function() {  
                       usSpinnerService.stop('spinner');
                     }, 1000);
@@ -357,6 +372,8 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                       splitStringArray = "";
                     }
                     $scope.jobinfo = result.data;
+                    $('#executeResultModal').modal('show');
+                    $scope.showExecuteResultLink = true;
                     $timeout(function() {  
                       usSpinnerService.stop('spinner');
                     }, 1000);
@@ -402,6 +419,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                 },function (reason) {
                     $scope.errorAlert = reason;
                 });
+                $('#deleteRscriptModal').modal('hide');
                 $scope.snippetMsg = $scope.currentsnippetObject.name + " deleted successfully.";
                 $scope.jobinfo = "";
                 $scope.currentsnippetObject = "";
@@ -436,7 +454,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
               if(result.data != '"NOTFOUND"' && $scope.mySercretsInSnippet == ""){
                 $scope.mySercretsInSnippet = $scope.currentsnippetObject.secrets + ',';
               }
-              rScript.set($scope.SnippetName, $scope.SnippetChannelddl , editor.getValue().replace(/\n/g,  " /n" ), $scope.mySercretsInSnippet).then(
+              rScript.set($scope.SnippetName, $scope.SnippetChannelddl , editor.getValue().replace(/\n/g,  " /n" ), $scope.mySercretsInSnippet, $scope.secretcodes).then(
                 function (result) {
                   if(result.status != 200){
                     $scope.errorAlert = result;
@@ -448,6 +466,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                       $scope.snippetMsg = "Code snippet updated successfully.";
                     }
                     if(result.data == '"OK"' || result.data == '"Updated"'){
+                      $scope.showExecuteResultLink = false;
                       $scope.selectedChannel = $scope.SnippetChannelddl;
                       $scope.buildTreeView($scope.SnippetChannelddl);
                       // $scope.SnippetName = "";
@@ -497,6 +516,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
         $('.channels-tree').find('.selected').removeClass('selected');
         $scope.rScriptSetShow = true;
         $scope.rScriptExecuteShow = false;
+        $scope.showExecuteResultLink = false;
         $scope.rScriptDeleteShow = false;
         editor.setValue("");
         $scope.newSnippetSecrets = true;
@@ -516,12 +536,15 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
         $scope.rScriptSetShow = false;
         $scope.newSnippetSecrets = false;
         $scope.rScriptExecuteShow = false;
+        $scope.showExecuteResultLink = false;
         $scope.rScriptDeleteShow = false;
         // editor.setValue("");
       }
       
       $scope.getsnippet = function(snippet) {
         $scope.snippetMsg = "";
+        $scope.jobid = "";
+        $scope.showExecuteResultLink = false;
         if(snippet.children.length <= 0){
           usSpinnerService.spin('spinner');
           var snippetRoleName = "";
@@ -552,26 +575,28 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
               if(result.status != 200){
                   $scope.errorAlert = result;
                 }else{
-                $scope.mySercretsInSnippet = [];
-                $scope.currentsnippet = result.data;
-                $scope.SnippetName = result.data.name;
-                $scope.SnippetChannelddl = result.data.channel;
-                if(result.data.secrets){
-                  for (var i = result.data.secrets.length - 1; i >= 0; i--) {
-                    var mySercretsInSnippetIndex = localStorage.secretcodes.indexOf(result.data.secrets[i]);
-                    if(mySercretsInSnippetIndex >= 0){
-                      $scope.mySercretsInSnippet.push(result.data.secrets[i]);
+                  if (result.status == 200 && result.data == '"AUTHERROR"') {
+                    $scope.errorAlert = result;
+                  }else{
+                    $scope.mySercretsInSnippet = [];
+                    $scope.currentsnippet = result.data;
+                    $scope.SnippetName = result.data.name;
+                    $scope.SnippetChannelddl = result.data.channel;
+                    if(result.data.secrets){
+                      for (var i = result.data.secrets.length - 1; i >= 0; i--) {
+                        var mySercretsInSnippetIndex = localStorage.secretcodes.indexOf(result.data.secrets[i]);
+                        if(mySercretsInSnippetIndex >= 0){
+                          $scope.mySercretsInSnippet.push(result.data.secrets[i]);
+                        }
+                      };
+                      $scope.mySercretsInSnippet = $scope.mySercretsInSnippet.toString();
+                    }else{
+                      $scope.mySercretsInSnippet = "";
                     }
-                  };
-                  $scope.mySercretsInSnippet = $scope.mySercretsInSnippet.toString();
-                }else{
-                  $scope.mySercretsInSnippet = "";
-                }
-                if(result.data.rscript){
-                  editor.setValue(result.data.rscript.replace( /\/n/g, '\n'));
-                }else{
-                  editor.setValue(result.data.content.replace( /\/n/g, '\n'));
-                }
+                    if(result.data.content){
+                      editor.setValue(result.data.content.replace( /\/n/g, '\n'));
+                    }
+                  }
               }
           },
           function (reason) {
@@ -590,7 +615,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
         }
       }
     }])
-    .filter('to_trusted', ['$sce', function($sce){
+    .filter('to_trustedHTML', ['$sce', function($sce){
         return function(text) {
             return $sce.trustAsHtml(text);
         }; 
@@ -607,3 +632,4 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
 (function(f){f.module("angularTreeview",[]).directive("treeModel",function($compile){return{restrict:"A",link:function(b,h,c){var a=c.treeId,g=c.treeModel,e=c.nodeLabel||"label",d=c.nodeChildren||"children",e='<ul><li data-ng-repeat="node in '+g+'"><i class="collapsed" data-ng-show="node.'+d+'.length && node.collapsed" data-ng-click="'+a+'.selectNodeHead(node)"></i><i class="expanded" data-ng-show="node.'+d+'.length && !node.collapsed" data-ng-click="'+a+'.selectNodeHead(node)"></i><i class="normal" data-ng-hide="node.'+
 d+'.length"></i> <span data-ng-class="node.selected" data-ng-click="'+a+'.selectNodeLabel(node);getsnippet(node);">{{node.'+e+'}}</span><div data-ng-hide="node.collapsed" data-tree-id="'+a+'" data-tree-model="node.'+d+'" data-node-id='+(c.nodeId||"id")+" data-node-label="+e+" data-node-children="+d+"></div></li></ul>";a&&g&&(c.angularTreeview&&(b[a]=b[a]||{},b[a].selectNodeHead=b[a].selectNodeHead||function(a){a.collapsed=!a.collapsed},b[a].selectNodeLabel=b[a].selectNodeLabel||function(c){b[a].currentNode&&b[a].currentNode.selected&&
 (b[a].currentNode.selected=void 0);c.selected="selected";b[a].currentNode=c}),h.html('').append($compile(e)(b)))}}})})(angular);
+

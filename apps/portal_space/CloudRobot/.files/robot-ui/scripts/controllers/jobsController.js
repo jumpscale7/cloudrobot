@@ -8,22 +8,22 @@ var robotAngularApp = angular.module('robotAngularApp')
     $scope.jobsList = [];
     $scope.buildJobslist = function buildJobslist() {
         usSpinnerService.spin('spinner');
-        jobs.list($scope.secretcodes).then(
-		    function (result) {
+        jobs.list(localStorage.secretcodes).then(
+            function (result) {
                 if(result.status != 200){
                     $scope.errorAlert = result;
                 }else{
+                    result.data = result.data.reverse();
                     $scope.jobsList = result.data;
                 }
-	        },function (reason) {
+            },function (reason) {
             $scope.errorAlert = reason;
             }
-	    );
+        );
         $timeout(function() {  
           usSpinnerService.stop('spinner');
         }, 1000);
     }
-    $scope.buildJobslist();
     $scope.$watch('bulidJobList', function() {
         if($scope.bulidJobList){
 	        $scope.filterJobs();
@@ -35,8 +35,12 @@ var robotAngularApp = angular.module('robotAngularApp')
                 $scope.timeRangeAgo = '-' + $scope.timeRangeAgo;
             }
         }
-        jobs.listFiltered($scope.secretcodes, $scope.rscriptNameFilter, $scope.timeRangeAgo, $scope.selectedChannelforJobs).then(
+        
+        jobs.listFiltered(localStorage.secretcodes, $scope.rscriptNameFilter, $scope.timeRangeAgo, $scope.selectedChannelforJobs).then(
             function (result) {
+                if($scope.jobinfo){
+                  $scope.jobinfo = "";
+                }
                 usSpinnerService.spin('spinner');
                 if(result.status != 200){
                     $scope.errorAlert = result;
@@ -45,6 +49,7 @@ var robotAngularApp = angular.module('robotAngularApp')
                     }, 1000);
                 }else{
                     if(result.data.length > 0){
+                        result.data = result.data.reverse();
                         $scope.jobsList = result.data;
                     }else{
                         $scope.snippetMsg = "No rscript executed with given criteria."
@@ -54,10 +59,21 @@ var robotAngularApp = angular.module('robotAngularApp')
                       usSpinnerService.stop('spinner');
                     }, 1000);
 		    	}
+                localStorage.rscriptNameFilter = $scope.rscriptNameFilter;
+                localStorage.timeRangeFilter = $scope.timeRangeAgo;
+                localStorage.channelFilter = $scope.selectedChannelforJobs;
 	        },function (reason) {
             $scope.errorAlert = reason;
             }
 	    );
+    }
+    if(localStorage.rscriptNameFilter || localStorage.timeRangeFilter || localStorage.channelFilter){
+        $scope.rscriptNameFilter = localStorage.rscriptNameFilter;
+        $scope.timeRangeAgo = localStorage.timeRangeFilter;
+        $scope.selectedChannelforJobs = localStorage.channelFilter;
+        $scope.filterJobs();
+    }else{
+        $scope.buildJobslist();
     }
     $scope.showJobDetails = function (jonID) {
     	$scope.datalogObject = "";
@@ -113,6 +129,7 @@ var robotAngularApp = angular.module('robotAngularApp')
 
     	        $scope.jobinfo = result.data;
                 $('#jobDetailModal').modal('show');
+                $scope.showExecuteResultLink = true;
             }
 	    },function (reason) {
             $scope.errorAlert = reason;
@@ -245,3 +262,4 @@ return {
   }
 }
 });
+

@@ -5,10 +5,10 @@
     <title>MS1 Robot</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
-    <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
-    <link href="css/flat-ui.css" rel="stylesheet">
-    <link rel="stylesheet" href="lib/hint/show-hint.css">
-    <link rel=stylesheet href="lib/codemirror.css">
+    <link href="/jslib/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="/jslib/flatui/css/flat-ui.css" rel="stylesheet">
+    <link rel="stylesheet" href="/jslib/bootstrap/js/hint/show-hint.css">
+    <link rel=stylesheet href="/jslib/codemirror/codemirror.css">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="icon" 
       type="image/ico" 
@@ -17,7 +17,7 @@
         
     </style>
   </head>
-  <body ng-app="robotAngularApp" style="zoom: 0.95;">
+  <body ng-app="robotAngularApp">
   <div id="wrap" ng-controller="mainController" >
     <div class="navbar navbar-default navbar-fixed-top header">
       <div class="container">
@@ -28,18 +28,18 @@
         <div class="navbar-collapse collapse" id="navbar-main">
         <ul class="nav navbar-nav">
             <li>
-              <a href="index.html" style="padding-top: 10px; font-size: 15px;">Rscripts</a>
+              <a href="index.html" style="padding-top: 10px; font-size: 14px;">Rscripts</a>
             </li>
             <li>
-              <a href="jobs.html" style="padding-top: 10px; font-size: 15px;">Jobs</a>
+              <a href="jobs.html" style="padding-top: 10px; font-size: 14px;">Jobs</a>
             </li>
             <li>
-              <a href="execute.html" style="padding-top: 10px; font-size: 15px;">Execute</a>
+              <a href="execute.html" style="padding-top: 10px; font-size: 14px;">Execute</a>
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="padding-top: 10px; font-size: 15px;">Hey {{user}} <span class="caret"></span></a>
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="padding-top: 10px; font-size: 14px;">Hey {{user}} <span class="caret"></span></a>
               <ul class="dropdown-menu" aria-labelledby="ddl1">
                 <li><a href="#" data-toggle="modal" data-target="#showSecretModal">secrets</a></li>
                 <li><a href="#" ng-click="logout()">logout</a></li>
@@ -69,7 +69,7 @@
     <div id="main" class="container">
         <div class="row" style="margin-top: 25px; margin-left: 0;">
           <div ng-controller="jobsController">
-          <h1 style="font-size: 24px; font-weight: normal; margin-top: 0; margin-bottom: 15px;">Jobs</h1>
+          <h1 style="font-weight: normal; margin-top: 0; margin-bottom: 15px;">Jobs</h1>
           <div class="alert alert-warning sample-show-hide" ng-show="snippetMsg" role="alert" style="height: 25px;font-size: 14px;line-height: 25px;padding: 10px;padding-top: 0;margin: 0 auto;margin-bottom: 0;width: 400px; text-align: center;">
             {{snippetMsg}}
           </div>
@@ -79,17 +79,17 @@
           </div>
           <div class="clearfix" style="margin-bottom: 20px;">
             <div class="col-md-4" style="padding-left: 0;">
-              <input type="text" class="form-control" placeholder="Any part of snippet name." style="margin: 15px auto; width: 80%; height: 39px;" ng-model="rscriptNameFilter">
+              <input type="text" class="form-control" placeholder="Any part of rscript name." style="margin: 15px auto; width: 80%; height: 35px;" ng-model="rscriptNameFilter">
             </div>
             <div class="col-md-4">
             <div style="position: relative; margin-left: 145px;" class="clearfix">
               <span spinner-key="spinner" us-spinner="{lines: 9,length: 5, width: 3, radius: 4, corners: 0.6, rotate: 28, direction: 1, color: '#1abc9c', speed: 1.1, trail: 56, shadow: false, hwaccel: false, className: 'spinner', zIndex: 0 , top: '35%', left: '20%'}"></span>
             </div>
-              <input type="text" class="form-control" placeholder="Time range.. e.g. -4h" style="margin: 15px auto; width: 80%; height: 39px;" ng-model="timeRangeAgo">
+              <input type="text" class="form-control" placeholder="Time range.. e.g. -4h" style="margin: 15px auto; width: 80%; height: 35px;" ng-model="timeRangeAgo">
             </div>
             <div class="col-md-4" style="padding-right: 0;">
             <!-- ng-options="channel as channel for channel in channelsToEnterinJobs" -->
-              <select style="border-radius: 5px; height: 39px; padding-left: 5px; width: 100%; margin: 15px auto; width: 80%; font-size: 16px;" ng-model="selectedChannelforJobs">
+              <select style="height: 35px; margin: 15px auto; width: 80%;" ng-model="selectedChannelforJobs">
                 <option value="">Choose channel</option>
                 <option ng-repeat="channel in channelsToEnter">{{channel}}</option>
               </select>
@@ -102,7 +102,7 @@
               <table class="table">
                 <thead>
                   <tr>
-                    <th style="width: 20%;" class="rscript_name" custom-sort order="'rscript_name'" sort="sort">Snippet name</th>
+                    <th style="width: 20%;" class="rscript_name" custom-sort order="'rscript_name'" sort="sort">Rscript name</th>
                     <th style="width: 20%;" class="rscript_channel" custom-sort order="'rscript_channel'" sort="sort">Channel</th>
                     <th style="width: 15%;" class="user" custom-sort order="'user'" sort="sort">User</th>
                     <th class="start" custom-sort order="'start'" sort="sort">Start time</th>
@@ -128,10 +128,10 @@
                       <h6 class="modal-title" id="myModalLabel">Job details</h6>
                     </div>
                     <div class="modal-body" style="overflow-y: scroll; max-height: 400px;">
-                      <div style="font-size: 16px;">
+                      <div style="font-size: 14px;">
                         <strong>Channel: </strong>{{jobinfo.rscript_channel}}
                         <br/>
-                        <strong>Snippet name: </strong>{{jobinfo.rscript_name}}
+                        <strong>Rscript name: </strong>{{jobinfo.rscript_name}}
                         <br/>
                         <strong>Job start time: </strong> {{jobinfo.start * 1000 | date:'medium'}}
                         <br/>
@@ -143,10 +143,10 @@
                         <br/>
                         <strong>Content: </strong>
                         <br/>
-                        <span ng-bind-html="jobinfo.rscript_content" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
+                        <span ng-bind-html="jobinfo.rscript_content | to_trustedHTML" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
                         <strong>Result: </strong>
                         <br/>
-                        <span ng-bind-html="jobinfo.result" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
+                        <span ng-bind-html="jobinfo.result | to_trustedHTML" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
                         <strong>State: </strong>{{jobinfo.state}}
                         <br/>
                         <strong>User: </strong>{{jobinfo.user}}
@@ -187,22 +187,23 @@
         <div class="row">
           <div class="col-md-3 pull-right">
             <div class="footer-banner">
-              <a href="http://Mothership1.com" style="text-decoration: none; font-size: 14px;">Mothership1.com</a>              
+              <a href="http://Mothership1.com" style="text-decoration: none; font-size: 13px;">Mothership1.com</a>              
             </div>
           </div>
         </div>
       </div>
     </footer>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular.min.js"></script>
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.15/angular-animate.js"></script>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.3/angular-sanitize.js"></script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script> 
-
+    <script src="/jslib/angular/angular1-3-0.min.js"></script>
+    <script src="/jslib/angular/angular-animate1-3-0.js"></script>
+    <script src="/jslib/angular/angular-sanitize1-3-0.js"></script>
+    <script src="/jslib/jqplot/jquery.min.js"></script>
+    <script src="/jslib/underscore/underscore-min.js"></script>
     <script src="scripts/app.js"></script>
     <script src="scripts/controllers/main.js"></script>
     <script src="scripts/controllers/jobsController.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="lib/spin.min.js"></script>
-    <script src="lib/angular-spinner.min.js"></script>
+    <script src="/jslib/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/jslib/spin.min.js"></script>
+    <script src="/jslib/angular/angular-spinner.min.js"></script>
 </body>
 </html>
+

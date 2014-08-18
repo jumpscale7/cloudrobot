@@ -14,10 +14,14 @@ var robotAngularApp = angular.module('robotAngularApp')
         });
       }
 
-    executeOnceEditor.setSize(548, 372);
-    $scope.waitFlag = 0;
+    executeOnceEditor.setSize('100%', '100%');
     $scope.rScriptExecuteOnce = function() {
-        if(executeOnceEditor.getValue() && $scope.SnippetName){
+        $scope.jobinfo = "";
+        $scope.jobid = "";
+        if(executeOnceEditor.getValue()){
+            if(!$scope.SnippetName){
+              $scope.SnippetName = 'unknown';
+            }
             usSpinnerService.spin('spinner');
             rScript.executeOnce(executeOnceEditor.getValue(), $scope.SnippetName, $scope.SnippetChannelddl, $scope.waitFlag).then(
                 function(result) {
@@ -32,6 +36,7 @@ var robotAngularApp = angular.module('robotAngularApp')
                       $scope.executeOnceMsg = $scope.SnippetName + " executed successfully.";
                       $timeout(function() {$scope.executeOnceMsg = "";}, 7000);
                       $scope.jobid = result.data;
+                      $('#executeResultModal').modal('show');
                       $timeout(function() {
                         usSpinnerService.stop('spinner');
                       }, 1000);
@@ -54,6 +59,7 @@ var robotAngularApp = angular.module('robotAngularApp')
                         splitStringArray = "";
                       }
                       $scope.jobinfo = result.data;
+                      $('#executeResultModal').modal('show');
                       $timeout(function() {
                         usSpinnerService.stop('spinner');
                       }, 1000);
