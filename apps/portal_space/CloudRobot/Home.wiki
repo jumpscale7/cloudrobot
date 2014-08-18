@@ -1,3 +1,6 @@
 @usedefault
 
 h2. CloudRobot
+
+
+[cloudrobot ui|cloudrobot/.files/robot-ui/index.html]
