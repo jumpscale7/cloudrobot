@@ -102,15 +102,12 @@ class system_robot(j.code.classGetBase()):
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
         result str
         """
-        result=self._rscriptfind(name,filter="", channel=channel, secrets=secrets)
-        if len(result)>1:
-            #raise RuntimeError("Too many results, can only get 1, be more specific.")
-            return "TOOMANY" 
-        elif len(result)==1:
-            self.osis_rscript.delete(key=result[0]["guid"])
+        rc,result=self._rscript_get(name,channel,secrets)
+        if rc==0:
+            self.osis_rscript.delete(key=result["guid"])
             return "OK"
         else:
-            return "NOTFOUND"
+            return result
 
     def _parsetree(self, value, result, fullresult=[], secrets=[]):
         result = list()
@@ -154,7 +151,7 @@ class system_robot(j.code.classGetBase()):
 
         return result  
 
-    def rscript_execute(self, name, channel, secrets, wait=1,**kwargs):
+    def rscript_execute(self, name, channel, secrets, wait=1,content="",**kwargs):
         """
         execute a script, returns job_longid
         param:name 
@@ -162,14 +159,21 @@ class system_robot(j.code.classGetBase()):
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
         result str which is guid of job
         """
-        result=self._rscriptfind(name,filter="", channel=channel, secrets=secrets)
-        if len(result)>1:
-            #raise RuntimeError("Too many results, can only get 1, be more specific.")
-            return "TOOMANY"
-        elif len(result)==0:
-            #raise RuntimeError("Could not find %s/%s"%(name, channel))
-            return "NOTFOUND"
-        snippet = result[0]['content']
+        if content=="" or content==None:
+            result=self._rscriptfind(name,filter="", channel=channel, secrets=secrets)
+            if len(result)>1:
+                #raise RuntimeError("Too many results, can only get 1, be more specific.")
+                return "TOOMANY"
+            elif len(result)==0:
+                #raise RuntimeError("Could not find %s/%s"%(name, channel))
+                return "NOTFOUND"
+        
+            snippet = result[0]['content']
+            if channel <> result[0]['channel']:
+                raise RuntimeError("ERROR channel should be same.")
+
+            content=snippet
+
         ctx=kwargs["ctx"]
         username = ctx.env["beaker.session"]["user"]
 
@@ -178,11 +182,8 @@ class system_robot(j.code.classGetBase()):
             user=users[0]["id"]
         else:
             raise RuntimeError("Authentication error: user not found.")
-
-        channel = result[0]['channel']
-
-
-        jobguid=j.servers.cloudrobot.toFileRobot(channel,snippet,user,name)
+        
+        jobguid=j.servers.cloudrobot.toFileRobot(channel,content,user,name)
 
         if str(wait)=="1":
             j.servers.cloudrobot.jobWait(jobguid)
@@ -191,7 +192,7 @@ class system_robot(j.code.classGetBase()):
         else:
             return jobguid
     
-    def rscript_execute_once(self, name,channel,rscript, wait=1, **kwargs):
+    def rscript_execute_once(self, name,channel,content, wait=1, **kwargs):
         """
         execute a script, returns job_longid
         param:rscript the content of the script
@@ -209,7 +210,7 @@ class system_robot(j.code.classGetBase()):
         else:
             raise RuntimeError("Authentication error: user not found.")
 
-        jobguid=j.servers.cloudrobot.toFileRobot(channel,rscript,user,name)
+        jobguid=j.servers.cloudrobot.toFileRobot(channel,content,user,name)
 
         if str(wait)=="1":
             j.servers.cloudrobot.jobWait(jobguid)
@@ -226,8 +227,41 @@ class system_robot(j.code.classGetBase()):
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
         result bool
         """
-        result=self._rscriptfind(name,filter="", channel=channel, secrets=secrets)
-        return len(result)==1
+        rc,result=self._rscript_get(name,channel,secrets)
+        return rc==0
+
+    def _rscript_get(self,name,channel,secrets):
+
+        result=self._rscriptfind(name,filter="", channel=channel)
+        
+        if len(result)>1:
+            #raise RuntimeError("Too many results, can only get 1, be more specific.")
+            return 1,"TOOMANY"
+        elif len(result)==0:
+            #raise RuntimeError("Could not find %s/%s"%(name, channel))
+            return 2,"NOTFOUND"
+        else:
+            result=result[0]
+            result.pop("_ckey")
+            # result.pop("guid")
+
+            sentsecrets = [str(secret).strip() for secret in secrets.split(',')] if secrets else []
+            if '' not in sentsecrets:
+                sentsecrets.append('')
+
+            if not result['secrets']==[]:
+
+                foundsecrets=[]
+                for sentsecret in sentsecrets:
+                    if sentsecret in result['secrets']:
+                        foundsecrets.append(sentsecret)           
+
+                if len(foundsecrets)<1:
+                    return 3,"AUTHERROR"
+
+                result["secrets"]=foundsecrets
+
+            return 0,result
 
     def rscript_get(self, name, channel, secrets, **kwargs):
         """
@@ -237,24 +271,8 @@ class system_robot(j.code.classGetBase()):
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
         result str
         """
-        result=self._rscriptfind(name,filter="", channel=channel, secrets=secrets)
-        if len(result)>1:
-            #raise RuntimeError("Too many results, can only get 1, be more specific.")
-            return "TOOMANY"
-        elif len(result)==0:
-            #raise RuntimeError("Could not find %s/%s"%(name, channel))
-            return "NOTFOUND"
-
-        item = result[0]
-        item.pop("_ckey")
-        item.pop("guid")
-
-        sentsecrets = [str(secret) for secret in secrets.split(',')] if secrets else []
-        sentsecrets.append('')
-        item['secrets'] = [str(secret) for secret in item['secrets']] if item['secrets'] else []
-        item['secrets'] = list(set(sentsecrets).intersection(set(item['secrets'])))
-        return item
-    
+        rc,result=self._rscript_get(name,channel,secrets)
+        return result
 
     def rscript_list(self, filter, channel, secrets, **kwargs):
         """
@@ -273,6 +291,7 @@ class system_robot(j.code.classGetBase()):
         return result2
 
     def _rscriptfind(self, name="",filter="", channel="", secrets=""):
+        
         cl=self.osis_rscript
         query=dict()
         if name==None:
@@ -289,22 +308,23 @@ class system_robot(j.code.classGetBase()):
         
         if secrets == None:
             secrets = ''
-        secrets = [secret.strip() for secret in secrets.split(',')]
-        secrets.append('') if not '' in secrets else ''
+        secrets2 = [secret.strip() for secret in secrets.split(',')]
+        secrets2.append('') if not '' in secrets2 else ''
 
         result=[]
         total, items = cl.simpleSearch(query, withtotal=True)
         for item in items:
             found=True
-            if secrets<>[] and item["secrets"]<>[]:                
-                sfound=False
-                for secrToCheck in secrets:
-                    if secrToCheck in item["secrets"]:
-                        sfound=True
-                if not sfound:
-                    found=False
-            elif secrets==[] and item["secrets"]<>[]:
-                found=False
+            
+            if secrets<>"":
+                if item["secrets"]<>[]:                
+                    sfound=False
+                    for secrToCheck in secrets2:
+                        if secrToCheck in item["secrets"]:
+                            sfound=True
+                    if not sfound:
+                        found=False
+
             if filter<>"":
                 ffound=False
                 if filter[0]=="^":
@@ -320,53 +340,67 @@ class system_robot(j.code.classGetBase()):
                 result.append(item)
         return result
 
-    def _jobfind(self, filter="", channel="", secrets="",ago=0):
+    def _jobfind(self,  prefix="", channel="", secrets="",ago=0):
         jobs=[]
-        rscripts=self._rscriptfind(filter=filter, channel=channel, secrets=secrets)
         cl=self.osis_job
+        
         if ago==None or ago=="":
             ago=0
         if ago<>0:
             ago=j.base.time.getEpochAgo(ago)
 
-        for rscript in rscripts:
-            query = {"rscript_name": rscript["name"], "rscript_channel": rscript["channel"]}
-            if ago:
-                query.update({'start': {'eq': 'from', 'value': ago, 'name':'start'}})
-            for job in cl.simpleSearch(query):
-                if isinstance(job, dict):
-                    jobs.append(job)
+        query = {"rscript_channel": channel}
+        if prefix<>"":
+            query.update({"rscript_name": prefix}) #@todo not ok, needs to be done better (now only full name)
+        if ago:
+            query.update({'start': {'eq': 'from', 'value': ago, 'name':'start'}})
+        for job in cl.simpleSearch(query):
+            if isinstance(job, dict):
+                jobs.append(job)
+
+        #@todo filter jobs which have not right secret
 
         return jobs
-
-                        
-    def rscript_set(self, name, channel, rscript, secrets, **kwargs):
+                  
+    def rscript_set(self, name, channel, content, secrets2access, secrets, **kwargs):
         """
         write a robot script
         tip: use dot notation  e.g. machine.create.york.kds
         param:name 
         param:channel channel e.g. machine,youtrack
-        param:rscript the content of the script
+        param:content the content of the script
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
         result str
         """
         if secrets == None:
             secrets = ''
-        exists = self._rscriptfind(name=name, channel=channel, secrets=secrets)
-        secrets = [secret.strip() for secret in secrets.split(',')]
-        if exists:
-            exists = exists[0]
-            exists['rscript'] = rscript
-            exists['secrets'].extend(secrets)
-            exists['secrets'] = list(set(exists['secrets']))
-            self.osis_rscript.set(exists)
-            return "Updated"
-        rs = self.osis_rscript.new()
-        rs.name = name
-        rs.channel = channel
-        rs.content = rscript
-        rs.secrets = secrets
+
+        rc,rscript=self._rscript_get(name,channel,secrets2access)
+
+        if rc==2:
+            #rscript does not exist yet
+            rs = self.osis_rscript.new()
+            rs.name = name
+            rs.channel = channel
+        elif rc==0:
+            rs=self.osis_rscript.get(rscript["guid"])
+        else:
+            return rscript #is not the script but the result error
+        
+        if secrets=="":
+            secretsToAdd=[]
+            rs.secrets=[]
+        else:
+            secretsToAdd = [secret.strip() for secret in secrets.split(',')]
+
+            for secretToAdd in secretsToAdd:
+                if secretToAdd not in rs.secrets:
+                    rs.secrets.append(secretToAdd)
+
+        rs.content = content
+
         self.osis_rscript.set(rs)
+
         return "OK"
 
     def secrets_get(self, **kwargs):
@@ -419,7 +453,7 @@ class system_robot(j.code.classGetBase()):
         print out
         return out    
 
-    def job_list(self, channel, filter, secrets, ago, **kwargs):
+    def job_list(self, channel, prefix, secrets, ago, **kwargs):
         """
         jobs are listed which belong to user
         param:channel channel e.g. machine,youtrack
@@ -427,5 +461,5 @@ class system_robot(j.code.classGetBase()):
         param:from examples -4d;-4h
         result str
         """
-        return self._jobfind(filter=filter, channel=channel, secrets=secrets,ago=ago)
+        return self._jobfind(prefix=prefix, channel=channel, secrets=secrets,ago=ago)
     

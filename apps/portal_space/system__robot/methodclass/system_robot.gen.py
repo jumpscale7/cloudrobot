@@ -34,12 +34,12 @@ class system_robot(j.code.classGetBase()):
         raise NotImplementedError ("not implemented method job_get")
     
 
-    def job_list(self, channel, secrets, filter, ago, **kwargs):
+    def job_list(self, channel, secrets, prefix, ago, **kwargs):
         """
         jobs are listed which belong to user
         param:channel channel e.g. machine,youtrack
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
-        param:filter any part of name (^machine. would mean at start of name)
+        param:prefix start of name sequence (or full)
         param:ago examples -4d;-4h
         result str
         """
@@ -70,12 +70,13 @@ class system_robot(j.code.classGetBase()):
         raise NotImplementedError ("not implemented method rscript_delete")
     
 
-    def rscript_execute(self, name, channel, secrets, wait=1, **kwargs):
+    def rscript_execute(self, name, channel, secrets, content, wait=1, **kwargs):
         """
         execute a script, returns job_longid
         param:name 
         param:channel channel e.g. machine,youtrack
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
+        param:content 
         param:wait 1 means yes; 0 no default=1
         result str
         """
@@ -83,10 +84,10 @@ class system_robot(j.code.classGetBase()):
         raise NotImplementedError ("not implemented method rscript_execute")
     
 
-    def rscript_execute_once(self, rscript, name, channel, wait=1, **kwargs):
+    def rscript_execute_once(self, content, name, channel, wait=1, **kwargs):
         """
         execute a script, returns job_longid
-        param:rscript the content of the script
+        param:content the content of the script
         param:name 
         param:channel channel e.g. machine,youtrack
         param:wait 1 means yes; 0 no default=1
@@ -132,13 +133,14 @@ class system_robot(j.code.classGetBase()):
         raise NotImplementedError ("not implemented method rscript_list")
     
 
-    def rscript_set(self, name, channel, rscript, secrets, **kwargs):
+    def rscript_set(self, name, channel, secrets2access, content, secrets, **kwargs):
         """
         write a robot script
         tip: use dot notation  e.g. machine.create.york.kds
         param:name 
         param:channel channel e.g. machine,youtrack
-        param:rscript the content of the script
+        param:secrets2access secret which is needed to be able to retrieve rscript
+        param:content the content of the script
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
         result str
         """

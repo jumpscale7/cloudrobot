@@ -31,8 +31,8 @@
         """     
         get a robot script
         """
-        var:name str,,@tags: optional
-        var:channel str,,channel e.g. machine,youtrack @tags: optional 
+        var:name str,,
+        var:channel str,,channel e.g. machine,youtrack
         var:secrets str,,secrets used if any; scripts can have secrets attached to them (comma separated) @tags: optional
         result:str
 
@@ -44,7 +44,8 @@
         """
         var:name str,,
         var:channel str,,channel e.g. machine,youtrack
-        var:rscript str,,the content of the script
+        var:secrets2access str,,secret which is needed to be able to retrieve rscript @tags: optional
+        var:content str,,the content of the script
         var:secrets str,,secrets used if any; scripts can have secrets attached to them (comma separated) @tags: optional
         result:str
 
@@ -61,17 +62,18 @@
         """     
         execute a script, returns job_longid
         """
-        var:name str,,@tags: optional 
-        var:channel str,,channel e.g. machine,youtrack @tags: optional 
+        var:name str,,
+        var:channel str,,channel e.g. machine,youtrack
         var:secrets str,,secrets used if any; scripts can have secrets attached to them (comma separated) @tags: optional
-        var:wait int,1,1 means yes; 0 no@tags: optional 
+        var:content str,,@tags: optional 
+        var:wait int,1,1 means yes; 0 no @tags: optional 
         result:str
 
     method:rscript_execute_once @noauth
         """     
         execute a script, returns job_longid
         """        
-        var:rscript str,,the content of the script
+        var:content str,,the content of the script
         var:name str,,@tags: optional 
         var:channel str,,channel e.g. machine,youtrack        
         var:wait int,1,1 means yes; 0 no@tags: optional 
@@ -129,6 +131,6 @@
         """
         var:channel str,,channel e.g. machine,youtrack @tags: optional 
         var:secrets str,,secrets used if any; scripts can have secrets attached to them (comma separated) @tags: optional
-        var:filter str,,any part of name (^machine. would mean at start of name) @tags: optional
+        var:prefix str,,start of name sequence (or full) @tags: optional
         var:ago str,,examples -4d;-4h  @tags: optional
         result:str
