@@ -1,0 +1,11 @@
+!user.check
+msg=...
+Dear user, we found issue in your identity information.
+Please use this tool by replying on this email and checking your information.
+In case there is an issue with the tool please email to kristof@incubaid.com
+
+thx
+
+Kristof
+
+...
