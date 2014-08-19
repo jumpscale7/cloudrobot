@@ -15,6 +15,9 @@ class CloudRobotFactory(object):
     def __init__(self):
         self.hrd=None
 
+    def init(self):
+        return self._init()
+
     def _init(self):
         osisinstance=self.hrd.get("cloudrobot.osis.connection")
         self.osis =j.core.osis.getClientByInstance(osisinstance)        

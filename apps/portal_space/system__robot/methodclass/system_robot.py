@@ -24,6 +24,7 @@ class system_robot(j.code.classGetBase()):
         self.osis_user=j.core.osis.getClientForCategory(self.osis, 'system', 'user')
         self.robots=robots.robots
         self.redis=j.clients.redis.getGeventRedisClient('127.0.0.1', 7768)
+        j.servers.cloudrobot.init()
 
     def authenticate(self, user=None, password=None, **kwargs):
         ctx = kwargs['ctx']
