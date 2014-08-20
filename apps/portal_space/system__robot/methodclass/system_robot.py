@@ -3,8 +3,6 @@ import JumpScale.baselib.redis
 import ujson as json
 import JumpScale.lib.cloudrobots
 import sys
-sys.path.append("/opt/jumpscale/apps/cloudrobot/")
-import robots
 import grequests as requests
 
 class system_robot(j.code.classGetBase()):
@@ -21,10 +19,10 @@ class system_robot(j.code.classGetBase()):
         self.osis = j.core.osis.getClient(user='root')
         self.osis_rscript=j.core.osis.getClientForCategory(self.osis, 'robot', 'rscript')
         self.osis_job=j.core.osis.getClientForCategory(self.osis, 'robot', 'job')
-        self.osis_user=j.core.osis.getClientForCategory(self.osis, 'system', 'user')
-        self.robots=robots.robots
+        self.osis_user=j.core.osis.getClientForCategory(self.osis, 'system', 'user')        
         self.redis=j.clients.redis.getGeventRedisClient('127.0.0.1', 7768)
         j.servers.cloudrobot.init()
+        self.robots=j.servers.cloudrobot.robots
 
     def authenticate(self, user=None, password=None, **kwargs):
         ctx = kwargs['ctx']

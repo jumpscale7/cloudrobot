@@ -65,6 +65,11 @@ class MS1(object):
 #            embed()
 #            raise RuntimeError("E:Could not login to MS1 API.")
 
+    def sendUserMessage(self,msg,level=2,html=False,args={}):
+        if args.has_key("msg_userid"):
+            user_id=args["msg_userid"]
+            j.servers.cloudrobot.sendUserMessage(user_id,msg,html=html)
+
     def getApiConnection(self, space_secret,**args):
         cs=self.getCloudspaceObj(space_secret)
 
@@ -200,12 +205,16 @@ class MS1(object):
             if j.basetype.ipaddress.check(machine['interfaces'][0]['ipAddress']):
                 break
             else:
-                time.sleep(2)
+                time.sleep(1)
         if not j.basetype.ipaddress.check(machine['interfaces'][0]['ipAddress']):
             raise RuntimeError('E:Machine was created, but never got an IP address')
 
         j.cloudrobot.vars["machine.ip.addr"]=machine['interfaces'][0]['ipAddress']
-            
+
+
+        #push initial key
+        ssh=j.tools.ms1._getSSHConnection(spacesecret,name,**args)        
+
         return machine_id
 
     def listImages(self,spacesecret,**args):
@@ -298,6 +307,7 @@ class MS1(object):
         return self._deletePortForwardRule(spacesecret, name, pubip, pubipport, 'tcp')
 
     def _createPortForwardRule(self, spacesecret, name, machineport, pubip, pubipport, protocol,**args):
+        self.sendUserMessage("Create PFW rule:%s %s %s"%(pubip,pubipport,protocol),args=args)
         api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
         portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
         if pubip=="":
@@ -310,6 +320,7 @@ class MS1(object):
         return "OK"
 
     def _deletePortForwardRule(self, spacesecret, name,pubip,pubipport, protocol,**args):
+        self.sendUserMessage("Delete PFW rule:%s %s %s"%(pubip,pubipport,protocol),args=args)
         api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
         portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
         if pubip=="":
@@ -324,7 +335,7 @@ class MS1(object):
 
         return "OK"        
 
-    def getFreeIpPort(self,spacesecret,**args):
+    def getFreeIpPort(self,spacesecret,mmin=90,mmax=1000,**args):
         api=self.getApiConnection(spacesecret)
         cloudspace_id = self.getCloudspaceId(spacesecret)
         cloudspaces_actor = api.getActor('cloudapi', 'cloudspaces')
@@ -347,11 +358,11 @@ class MS1(object):
                 elif item['protocol']=="udp":
                     udpports[int(item['publicPort'])]=True
 
-        for i in range(90,1000):
+        for i in range(mmin,mmax):
             if not tcpports.has_key(i) and not udpports.has_key(i):
                 break
 
-        if i>1000:
+        if i>mmax-1:
             raise RuntimeError("E:cannot find free tcp or udp port.")
 
         vars["space.free.tcp.port"]=str(i)
@@ -370,8 +381,42 @@ class MS1(object):
             return 'Machine %s does not belong to cloudspace whose secret is given' % name
         
 
-        tempport=j.base.idgenerator.generateRandomInt(1000,1500)
-        # tempport=1333
+        mkey="%s_%s"%(cloudspace_id,machine_id)
+        print "check ssh connection:%s"%mkey
+        if self.redis_cl.hexists("ms1_iaas:machine:sshpub",mkey):
+            print "in cache"
+            pub_ipaddr,pub_port=self.redis_cl.hget("ms1_iaas:machine:sshpub",mkey).split(",")
+            ssh_connection = j.remote.cuisine.api
+            ssh_connection.fabric.api.env['connection_attempts'] = 5
+            ssh_connection.mode_user()
+            if j.system.net.tcpPortConnectionTest(pub_ipaddr, int(pub_port)):
+                try:
+                    ssh_connection.connect('%s:%s' % (pub_ipaddr, pub_port), "root")
+                    return ssh_connection
+                except Exception,e:
+                    from IPython import embed
+                    print "DEBUG NOW _getSSHConnection error"
+                    embed()
+        print "RECREATE SSH CONNECTION"                
+        portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
+        items=portforwarding_actor.list(cloudspace_id)
+
+        if len(machine["interfaces"])>0:
+            local_ipaddr=machine["interfaces"][0]['ipAddress'].strip()
+        else:
+            raise RuntimeError("cannot find local ip addr")
+
+        #remove leftovers
+        for item in items:
+            if item['localIp'].strip()==local_ipaddr and int(item['localPort'])==22:
+                self.sendUserMessage("Delete existing PFW rule:%s %s"%(item['localIp'],22),args=args)
+                try:
+                    portforwarding_actor.delete(cloudspace_id,item["id"])
+                except Exception,e:
+                    self.sendUserMessage("Warning: could not delete.",args=args)
+        
+        tempportdict=self.getFreeIpPort(spacesecret,mmin=1500,mmax=1999,**args)
+        tempport=tempportdict['space.free.tcp.port']
 
         counter=1
         localIP=machine["interfaces"][0]["ipAddress"]
@@ -392,20 +437,24 @@ class MS1(object):
         if not j.system.net.waitConnectionTest(cloudspace['publicipaddress'], int(tempport), 5):
             raise RuntimeError("E:Failed to connect to %s" % (tempport))
 
+        #push robot local ssh key
+        keyloc="/root/.ssh/id_dsa.pub"
+        key=j.system.fs.fileGetContents(keyloc)
+        rloc="/root/.ssh/authorized_keys"
+
         ssh_connection = j.remote.cuisine.api
-        username, password = machine['accounts'][0]['login'], machine['accounts'][0]['password']
-        ssh_connection.fabric.api.env['password'] = password
-        ssh_connection.fabric.api.env['connection_attempts'] = 5
-        ssh_connection.connect('%s:%s' % (cloudspace['publicipaddress'], tempport), username)
-        # if not j.system.net.waitConnectionTest(cloudspace['publicipaddress'], int(sshport), 60):
-        #     return "Failed to connect to %s %s" % (cloudspace['publicipaddress'], ssh_port)
+
+        ssh_connection.mode_sudo()
 
         username, password = machine['accounts'][0]['login'], machine['accounts'][0]['password']
         ssh_connection.fabric.api.env['password'] = password
         ssh_connection.fabric.api.env['connection_attempts'] = 5
         ssh_connection.connect('%s:%s' % (cloudspace['publicipaddress'], tempport), username)
-        # if not j.system.net.waitConnectionTest(cloudspace['publicipaddress'], int(sshport), 60):
-        #     return "Failed to connect to %s %s" % (cloudspace['publicipaddress'], ssh_port)
+
+        #will overwrite all old keys
+        ssh_connection.file_write(rloc,key)
+
+        self.redis_cl.hset("ms1_iaas:machine:sshpub",mkey,"%s,%s"%(pubip,tempport))        
 
         return ssh_connection
 

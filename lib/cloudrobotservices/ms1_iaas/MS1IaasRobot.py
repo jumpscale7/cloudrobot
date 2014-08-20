@@ -133,8 +133,16 @@ class MS1RobotCmds():
         return 'Machine created successfully. Machine ID: %s ' % machine_id
 
     def machine__list(self, **args):
-        return j.tools.ms1.listMachinesInSpace(**args)
-
+        res=j.tools.ms1.listMachinesInSpace(**args)
+        out=""
+        for item in res:            
+            if len(item["nics"])>0:
+                ipaddr=item["nics"][0]['ipAddress']
+            else:
+                ipaddr=""
+            out+="%-20s %-20s %s\n"%(item["name"],ipaddr,item["status"])
+        return out
+        
     def machine__delete(self, **args):
         res=j.tools.ms1.deleteMachine(**args)
         if res=="NOTEXIST":
@@ -190,25 +198,31 @@ class MS1RobotCmds():
         return out
 
 
-    def machine__deploysshkey(self,**args):        
-        ssh=j.tools.ms1._getSSHConnection(**args)
-        return
+    def machine__deploysshkey(self,**args):
 
-        user=args["user"]        
+        tocheck=["spacesecret","name"]
+        for item in tocheck:
+            if not args.has_key(item):
+                raise RuntimeError("E:Could not find argument:'%s', please specify"%item)
+
+        spacesecret=args.pop("spacesecret")        
+        name=args.pop("name")
+        ssh=j.tools.ms1._getSSHConnection(spacesecret,name,**args)        
+
+        if args.has_key("user"):
+            user=args["user"]        
 
         if not self.redis.hexists("users",user):
             raise RuntimeError("E:Could not find user:%s. \nmake sure !oss.sync has been executed."%user)
 
         user=json.loads(self.redis.hget("users",user))
         key=user["sshpubkey"]
-        ssh.mode_sudo()
-        from IPython import embed
-        print "DEBUG NOW ppp"
-        embed()
-        
-        ssh.ssh_authorize("/root",key)
-        from IPython import embed
-        print "DEBUG NOW machine__deploysshkey"
-        embed()
-        
 
+        rloc="/root/.ssh/authorized_keys"
+        C=ssh.file_read(rloc)
+        if C.find(key)==-1:
+            print "add key"
+            C+="\nkey\n"
+            ssh.file_write(rloc,key)
+            return "key deployed"
+        return "key was already deployed"

@@ -110,24 +110,34 @@ class TxtRobot():
         res={}
         out=""
         alias=self.argsAlias
-        name,data=line.split("=",1)
-        name=name.lower().strip("@")
-        if alias.has_key(name):
-            name=alias[name]
+        if line.find("=")<>-1:
+            name,data=line.split("=",1)
+                                    
+            name=name.lower().strip("@")
+            if alias.has_key(name):
+                name=alias[name]
 
-        val=data.strip().replace("\\n","\n")
+            val=data.strip().replace("\\n","\n")
 
-        if val.find("#")<>-1:
-            val=val.split("#",1)[0].strip()        
+            if val.find("#")<>-1:
+                val=val.split("#",1)[0].strip()        
 
-        if val.find("$")<>-1:
-            for toreplace,replace in j.cloudrobot.vars.iteritems():
-                val=val.replace("$%s"%toreplace,str(replace))
-            for toreplace,replace in args.iteritems():
-                val=val.replace("$%s"%toreplace,str(replace))
-                    
-        args[name]=val
+            if val.find("$")<>-1:
+                for toreplace,replace in j.cloudrobot.vars.iteritems():
+                    val=val.replace("$%s"%toreplace,str(replace))
+                for toreplace,replace in args.iteritems():
+                    val=val.replace("$%s"%toreplace,str(replace))
+                        
+            args[name]=val
         return args
+
+    def args2session(self,args):        
+        if self.args.has_key("msg_userid"):
+            j.servers.cloudrobot.setUserGlobals(self.args["msg_userid"],args)
+        
+    def message2session(self,result):
+        if self.args.has_key("msg_userid"):
+            j.servers.cloudrobot.sendUserMessage(self.args["msg_userid"],result)
 
     def _longTextTo1Line(self,txt):
         txt=txt.rstrip("\n")
@@ -217,7 +227,8 @@ class TxtRobot():
         if result<>"":
             out+=j.tools.text.prefix(">ERROR: ",result)
         if out.strip()<>"" and out[-1]<>"\n":
-            out+="\n"            
+            out+="\n" 
+        self.message2session("ERROR:%s\n"%out)
         print out
         return out
 
@@ -265,6 +276,7 @@ class TxtRobot():
         splitted=txt.split("\n")
 
         gargs={}
+        self.args=gargs
 
         cmdfound=False
 
@@ -379,8 +391,9 @@ class TxtRobot():
 
         if cmd<>"" and rc==0:
             #end of cmd block
-            cmdfound=True                
-            res2,rc=self.processCmd(cmdblock,entity, cmd, args,gargs)
+            cmdfound=True      
+            self.args2session(gargs)            
+            res2,rc=self.processCmd(cmdblock,entity, cmd, args,gargs)            
             out+=res2
 
         out=out.strip()+"\n"
@@ -394,7 +407,8 @@ class TxtRobot():
             out=out.replace("\n\n\n","\n\n")
 
         if cmdfound==False: 
-            out+= self.responseError("\n","Did not find a command to execute.")
+            self.args2session(gargs)
+        #     out+= self.responseError("\n","Did not find a command to execute.")
 
         if gargs.has_key("mail_from"):
             ffrom=gargs["mail_from"]
@@ -412,6 +426,7 @@ class TxtRobot():
 
     def processCmd(self, cmdblock,entity, cmd, args,gargs):
         print "EXECUTE:\n%s"%cmdblock
+        self.message2session("CMD:%s"%cmd)
         args=copy.copy(args)
         for key,val in gargs.iteritems():
             args[key]=val
@@ -456,17 +471,20 @@ class TxtRobot():
                         elif str(e).find("F:")==0:
                             # j.errorconditionhandler.processPythonExceptionObject(e)
                             e=str(e)[2:]
-                            print e                        
+                            print e       
+
                             return self.responseError(e,"Cannot execute: '%s':'%s'\n"%(entity,cmd))
                         else:
                             j.errorconditionhandler.processPythonExceptionObject(e)
                         return self.responseError(cmdblock,"Cannot execute: '%s':'%s' , could not execute code, error."%(entity,cmd)),1
 
         if result==None:
-            return self.responseError(cmdblock,"Cannot execute: !%s.%s , entity:method not found."%(entity,cmd)),1
+            msg="Cannot execute: !%s.%s , entity:method not found."%(entity,cmd)
+            return self.responseError(cmdblock,msg),1
 
         if not j.basetype.string.check(result):
-            result=yaml.dump(result, default_flow_style=False).replace("!!python/unicode ","")        
+            result=yaml.dump(result, default_flow_style=False).replace("!!python/unicode ","")
+
         out=self.response(cmdblock,result)
 
         if out.find("$")<>-1:
@@ -476,6 +494,8 @@ class TxtRobot():
                 out=out.replace("$%s"%toreplace,str(replace))  
             for toreplace,replace in args.iteritems():
                 out=out.replace("$%s"%toreplace,str(replace))  
+
+        self.message2session("result:\n%s"%result)
 
         print out
         return out,0
@@ -487,8 +507,7 @@ class TxtRobot():
         #         for toreplace,replace in j.cloudrobot.vars.iteritems():
         #             val=val.replace("$%s"%toreplace,str(replace))
         #         for toreplace,replace in args.iteritems():
-        #             val=val.replace("$%s"%toreplace,str(replace))   
-        
+        #             val=val.replace("$%s"%toreplace,str(replace))           
         for key in args.keys():
             if args[key].find("#")<>-1:
                 args[key]=args[key].split("#",1)[0].strip()
