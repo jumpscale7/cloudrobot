@@ -106,12 +106,77 @@ class XMPPRobot(sleekxmpp.ClientXMPP):
             msg -- The received message stanza. See the documentation
                    for stanza objects and the Message stanza to see
                    how it may be used.
-        """        
+        """
+
+        def sendState(userid):
+            state=j.servers.cloudrobot.getUserState(userid)
+            # state.pop("moddate")
+            hrddata=j.db.serializers.hrd.dumps(state)
+            j.servers.cloudrobot.sendUserMessage(userid,"state:\n%s"%hrddata)
+
+        ffrom=str(msg["from"]).split("/")[0]
+        
+        try:
+            userid=j.servers.cloudrobot.getUserIdFromXmpp(ffrom)
+            gglobals=j.servers.cloudrobot.getUserGlobals(userid)
+        except Exception,e:
+            self.redisq.put("1:%s:%s"%(ffrom,str(e)))
+            return
+
         if msg['type'] in ('chat', 'normal'):
             body=msg["body"]
-            if body=="stop":
-                msg.reply("stopped").send()
-                j.application.stop()
+            if body=="globals":
+                hrddata=j.db.serializers.hrd.dumps(gglobals)
+                j.servers.cloudrobot.sendUserMessage(userid,"globals:\n%s"%hrddata)
+            elif body.find("session")==0:
+                body=body.replace("session","")
+                session=body.strip().strip(":=").strip()
+                try:
+                    if session=="":
+                        sendState(userid)
+                    else:
+                        j.servers.cloudrobot.setUserSessionId(userid,session) 
+                        j.servers.cloudrobot.sendUserMessage(userid,"your current session\n%s"%sessiondata)
+                except Exception,e:
+                    self.redisq.put("1:%s:%s"%(ffrom,str(e)))
+                    return
+
+            elif body.find("loglevel")==0:
+                loglevel=body.replace("loglevel","")
+                loglevel=loglevel.strip().strip(":=").strip()
+                try:
+                    if loglevel=="":
+                        sendState(userid)
+                    else:
+                        j.servers.cloudrobot.setUserSessionLoglevel(userid,loglevel)   
+                        sendState(userid)
+                except Exception,e:
+                    self.redisq.put("1:%s:%s"%(ffrom,str(e)))
+                    return
+
+
+            elif body.find("channel")==0:
+                channel=body.replace("channel","")
+                channel=channel.strip().strip(":=").strip()
+                try:
+                    if channel=="":
+                        robots="\n".join(self.robots.keys())
+                        j.servers.cloudrobot.sendUserMessage(userid,"Available robot channels:\n%s"%robots)
+                        sendState(userid)
+                    else:
+                        j.servers.cloudrobot.setUserSessionChannel(userid,channel)   
+                        sendState(userid)
+                except Exception,e:
+                    self.redisq.put("1:%s:%s"%(ffrom,str(e)))
+                    return
+
+            elif body.find("clear")==0:
+                try:
+                    j.servers.cloudrobot.clearUserGlobals(userid)   
+                except Exception,e:
+                    self.redisq.put("1:%s:%s"%(ffrom,str(e)))
+                    return
+
             elif body=="shell":
                 from IPython import embed
                 print "DEBUG NOW shell"
@@ -121,8 +186,13 @@ class XMPPRobot(sleekxmpp.ClientXMPP):
                 html="""<a href="http://www.yahoo.com">here</a>"""
                 self.redisq.put("2:despiegk@jabb3r.net:%s"%html)
             else:
-                msg.reply(body).send()
-        
+                try:
+                    state=j.servers.cloudrobot.getUserState(userid)
+                    j.servers.cloudrobot.toFileRobot(state["channel"],body,mailfrom="",rscriptname="xmpp",args=gglobals,userid=userid)
+                except Exception,e:
+                    from IPython import embed
+                    print "DEBUG NOW error in to filerobot"
+                    embed()                
 
     def rpcRequest(self, environ, start_response):
         commands_str = environ["wsgi.input"].read()
