@@ -13,9 +13,6 @@
     <link rel="icon" 
       type="image/ico" 
       href="favicon.ico" />
-    <style type="text/css">
-        
-    </style>
   </head>
   <body ng-app="robotAngularApp">
   <div id="wrap" ng-controller="mainController" >
@@ -28,18 +25,18 @@
         <div class="navbar-collapse collapse" id="navbar-main">
         <ul class="nav navbar-nav">
             <li>
-              <a href="index.html" style="padding-top: 10px; font-size: 14px;">Rscripts</a>
+              <a href="index.html" class="ptm font-14">Rscripts</a>
             </li>
             <li>
-              <a href="jobs.html" style="padding-top: 10px; font-size: 14px;">Jobs</a>
+              <a href="jobs.html" class="ptm font-14">Jobs</a>
             </li>
             <li>
-              <a href="execute.html" style="padding-top: 10px; font-size: 14px;">Execute</a>
+              <a href="execute.html" class="ptm font-14">Execute</a>
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="font-size: 14px; padding-top: 10px;">Hey {{user}} <span class="caret"></span></a>
+              <a class="dropdown-toggle ptm font-14" data-toggle="dropdown" href="#">Hey {{user}} <span class="caret"></span></a>
               <ul class="dropdown-menu" aria-labelledby="ddl1">
                 <li><a href="#" data-toggle="modal" data-target="#showSecretModal">secrets</a></li>
                 <li><a href="#" ng-click="logout()">logout</a></li>
@@ -53,48 +50,36 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h6 class="modal-title" id="myModalLabel">Secrets</h6>
+            <h6 class="modal-title">Secrets</h6>
           </div>
           <div class="modal-body">
             Your secrets are:
             <input ng-model="secretcodes" type="text" placeholder="Enter a secret code.." class="form-control" required>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" ng-click="saveSecret()" style="padding: 5px 10px;">Save</button>
-            <button type="button" class="btn btn-default" ng-click="closeModal()" style="padding: 5px 10px;">Cancel</button>
+            <button type="button" class="btn btn-primary pvs phm" ng-click="saveSecret()">Save</button>
+            <button type="button" class="btn btn-default pvs phm" ng-click="closeModal()">Cancel</button>
           </div>
         </div>
       </div>
     </div>
     <div id="main" class="container">
-        <div class="row" style="height: 25px; margin-bottom: 10px;">
-          <div class="alert alert-success sample-show-hide" ng-show="snippetMsg" role="alert" style="height: 25px;font-size: 14px;line-height: 25px;padding: 10px;padding-top: 0;margin: 0 auto;margin-bottom: 0;width: 400px; text-align: center;">
+        <div id="alerts-block" class="row">
+          <div class="alert alert-success sample-show-hide alert-msg" ng-show="snippetMsg" role="alert">
             {{snippetMsg}}
           </div>
-          <div class="alert alert-danger sample-show-hide" ng-show="errorAlert" role="alert" style="height: 25px;font-size: 14px;line-height: 25px;padding: 10px;padding-top: 0;margin: 0 auto;margin-bottom: 0;width: 580px; text-align: center;">
+          <div class="alert alert-danger sample-show-hide alert-msg" ng-show="errorAlert" role="alert">
             <span ng-if="errorAlert.status == 0">0: Internal server error, please try again later.</span>
             <span ng-if="errorAlert.status != 0">{{errorAlert.status}}: {{errorAlert.data}}</span>            
+          </div>
+          <div class="alert alert-warning sample-show-hide alert-msg" ng-show="secretsWarnAlert" role="alert">
+            <span>Please add secret code first.. <a href="#" data-toggle="modal" data-target="#showSecretModal">add now</a></span>
           </div>
         </div>
         <div class="row">
           <div class="col-md-3">
-            <!-- <div class="btn-group select select-block">
-               <button class="btn dropdown-toggle clearfix btn-primary" data-toggle="dropdown"><span class="filter-option pull-left">Channels</span>&nbsp;<span class="caret"></span></button><span class="dropdown-arrow dropdown-arrow-inverse"></span>
-               <ul class="dropdown-menu dropdown-inverse" role="menu" style="max-height: 451px; overflow-y: auto; min-height: 108px;">
-                  <li rel="0"><a tabindex="-1" href="#" class=""><span class="pull-left">Choose channel</span></a></li>
-               </ul>
-            </div> -->
-            <select style="height: 31px;" ng-model='selectedChannel' ng-options="channel as channel for channel in channelsNames"></select>
+            <select class="treeview-channels" ng-model='selectedChannel' ng-options="channel as channel for channel in channelsNames"></select>
             <div class="channels-tree">
-            <!--
-              [TREE attribute]
-              angular-treeview: the treeview directive
-              tree-id : each tree's unique id.
-              tree-model : the tree model on $scope.
-              node-id : each node's id
-              node-label : each node's label
-              node-children: each node's children
-            -->
             <div data-angular-treeview="true" data-tree-id="mytree" data-tree-model="roleList" data-node-id="roleId" data-node-label="roleName"
               data-node-children="children">
             </div>
@@ -102,35 +87,25 @@
 
           </div>
           <div class="col-md-9">
-            <!-- <a href="#" ng-click="addsnippet()" title="New Snippet" style="float: left; margin-right: 10px;"><span class="fui-new" style="margin-right: 5px; float: left;"></span><span style="font-size: 16px; margin-top: 2px; float: left; display: block; margin-bottom: 10px;">New snippet</span></a> -->
-            <a href="#" class="btn btn-danger" title="New rscript" style="float: left; margin-right: 5px; margin-bottom: 13px; padding: 4px 9px; margin-top: 3px;" ng-click="addsnippet()">New rscript</a>
+            <a id="new-rscript" href="#" class="btn btn-danger" title="New rscript" ng-disabled="secretsWarnAlert" ng-click="addsnippet()">New rscript</a>
             <a href="#" class="cancel-btn" ng-show="showCancelSetSnippetBtn" ng-click="hideSetSnippetBlock()">Cancel</a>
-            <div style="position: relative; margin-left: 145px;" class="clearfix">
+            <div id="spinner-container" class="clearfix">
               <span spinner-key="spinner" us-spinner="{lines: 9,length: 5, width: 3, radius: 4, corners: 0.6, rotate: 28, direction: 1, color: '#1abc9c', speed: 1.1, trail: 56, shadow: false, hwaccel: false, className: 'spinner', zIndex: 0 , top: '35%', left: '35%'}"></span>
             </div>
             <div id="codeArea" style="clear: both; height: 455px;">
               <textarea id="code" name="code" ></textarea>
             </div>
             <input type="text" ng-model="SnippetName" placeholder="Enter rscript name. e.g. machine.youtrack" class="form-control sample-show-hide" style="margin: 15px 0;" ng-show="newSnippetName">
-            <!-- <input type="text" ng-model="SnippetChannel" placeholder="Enter channel name. e.g. machines" class="form-control" style="margin: 15px 0;" ng-show="newSnippetChannel"> -->
             <select ng-model="SnippetChannelddl" ng-options="scriptChannel as scriptChannel for scriptChannel in channelsToEnter" ng-show="newSnippetChannel" class="sample-show-hide"> 
             </select>
-            <!-- {{channelsToEnter}} -->
             <div style="text-align: center;">
               <input type="text" ng-model="mySercretsInSnippet" placeholder="Enter secrets e.g. 111,333,555" class="form-control sample-show-hide" style="margin: 15px 0;" ng-show="newSnippetChannel">
             </div>
-            <input type="checkbox" ng-model="waitFlag" ng-true-value="1" ng-false-value="0" style="float: left; margin-top: 7px; margin-right: 10px;" class="sample-show-hide" ng-show="rScriptExecuteShow"><p style="margin-top: 8px; font-size: 14px;" class="sample-show-hide" ng-show="rScriptExecuteShow">Wait until rscript get executed?</p>
+            <input type="checkbox" ng-model="waitFlag" ng-true-value="1" ng-false-value="0" style="float: left; margin-top: 7px; margin-right: 10px;" class="sample-show-hide" ng-show="rScriptExecuteShow"><p style="margin-top: 8px;" class="sample-show-hide font-14" ng-show="rScriptExecuteShow">Wait until rscript get executed?</p>
               <div style="width: 315px; margin: auto; text-align: center;" class="clearfix">
-                <!-- <a ng-click="submitRobotRequest()" class="btn btn-block btn-lg btn-primary go-button" style="float: right; margin-top: 10px;">Go</a> -->
-                <!-- <select class="select-block actions" ng-model="selectedItemClone">
-                  <option value="choose" ng-selected="selectedItem == 'choose'" selected="selected">Choose action</option>
-                  <option value="set" ng-selected="selectedItem == 'set'">set</option>
-                  <option value="execute" ng-selected="selectedItem == 'execute'">execute</option>
-                  <option value="delete" ng-selected="selectedItem == 'delete'">delete</option>
-               </select> -->
-               <a href="#" class="btn btn-primary sample-show-hide" style="padding: 5px 10px; margin-top: 5px; margin-right: 10px;" ng-click="rScriptSet()" ng-show="rScriptSetShow">Save</a>
-               <a href="#" class="btn btn-primary sample-show-hide" style="padding: 5px 10px; margin-top: 5px; margin-right: 10px;" ng-click="rScriptExecute()" ng-show="rScriptExecuteShow">Execute</a>
-               <a href="#" class="btn btn-primary sample-show-hide" style="padding: 5px 10px; margin-top: 5px; margin-right: 10px;" data-toggle="modal" data-target="#deleteRscriptModal" ng-show="rScriptDeleteShow">Delete</a>
+               <a href="#" class="btn btn-primary sample-show-hide pvs phm mts mrm" ng-click="rScriptSet()" ng-show="rScriptSetShow">Save</a>
+               <a href="#" class="btn btn-primary sample-show-hide pvs phm mts mrm" ng-click="rScriptExecute()" ng-show="rScriptExecuteShow">Execute</a>
+               <a href="#" class="btn btn-primary sample-show-hide pvs phm mts mrm" data-toggle="modal" data-target="#deleteRscriptModal" ng-show="rScriptDeleteShow">Delete</a>
                <div class="modal fade" id="deleteRscriptModal" tabindex="-1" role="dialog" aria-labelledby="deleteRscriptModal" aria-hidden="true">
                   <div class="modal-dialog">
                     <div class="modal-content">
@@ -138,22 +113,22 @@
                         <h6 class="modal-title" style="text-align: left;">Remove rscript</h6>
                       </div>
                       <div class="modal-body" style="overflow-y: scroll; max-height: 400px;">
-                        <div ng-show="jobinfo" class="jobinfo sample-show-hide" style="font-size: 15px;">
-                        <span ng-bind-html="jobinfo.result | to_trustedHTML" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
+                        <div ng-show="jobinfo" class="jobinfo sample-show-hide font-15">
+                        <span ng-bind-html="jobinfo.result | to_trustedHTML" class="jobinfo-result"></span>
                       </div>
-                      <div class="sample-show-hide" style="margin-top: 25px; font-size: 15px; padding: 13px;">
+                      <div class="sample-show-hide font-15" style="margin-top: 25px; padding: 13px;">
                         Are you sure you want to remove rscript?
                       </div>
                       </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" ng-click="rScriptDelete()" style="padding: 5px 10px;">ok</button>
-                        <button type="button" class="btn btn-primary" ng-click="closeModal()" style="padding: 5px 10px;">cancel</button>
+                        <button type="button" class="btn btn-default pvs phm" ng-click="rScriptDelete()">ok</button>
+                        <button type="button" class="btn btn-primary pvs phm" ng-click="closeModal()">cancel</button>
                       </div>
                     </div>
                   </div>
                 </div>
                <br />
-               <a href="#" class="sample-show-hide" style="font-size: 14px;" ng-show="showExecuteResultLink" data-toggle="modal" data-target="#executeResultModal">Show execute result</a>
+               <a href="#" class="sample-show-hide font-14" ng-show="showExecuteResultLink" data-toggle="modal" data-target="#executeResultModal">Show execute result</a>
               </div>
           </div>
         </div>
@@ -165,15 +140,15 @@
                 <h6 class="modal-title" ng-show="jobid">Job ID</h6>
               </div>
               <div class="modal-body" style="overflow-y: scroll; max-height: 400px;">
-                <div ng-show="jobinfo" class="jobinfo sample-show-hide" style="font-size: 15px;">
-                <span ng-bind-html="jobinfo.result | to_trustedHTML" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
+                <div ng-show="jobinfo" class="jobinfo sample-show-hide font-15">
+                <span class="jobinfo-result" ng-bind-html="jobinfo.result | to_trustedHTML"></span>
               </div>
-              <div ng-show="jobid" class="sample-show-hide" style="margin-top: 25px; font-size: 15px; padding: 13px; margin: 25px auto; text-align: center;">
+              <div id="jobid" ng-show="jobid" class="sample-show-hide font-15">
                 {{jobid}}
               </div>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-primary" ng-click="closeModal()" style="padding: 5px 10px;">ok</button>
+                <button type="button" class="btn btn-primary pvs phm" ng-click="closeModal()">ok</button>
               </div>
             </div>
           </div>
@@ -185,7 +160,7 @@
         <div class="row">
           <div class="col-md-3 pull-right">
             <div class="footer-banner">
-              <a href="http://Mothership1.com" style="text-decoration: none; font-size: 13px;">Mothership1.com</a>              
+              <a href="http://Mothership1.com" class="font-13 text-decoration-none">Mothership1.com</a>              
             </div>
           </div>
         </div>

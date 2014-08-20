@@ -213,3 +213,61 @@ b, strong{
 .pagination ul{
   height: 31px;
 }
+.font-13{
+  font-size: 13px !important;
+}
+.font-14{
+  font-size: 14px !important;
+}
+.font-15{
+  font-size: 15px !important;
+}
+.text-decoration-none{
+  text-decoration: none !important;
+}
+#alerts-block{
+  height: 25px; 
+  margin-bottom: 10px;
+}
+.alert-msg{
+  height: 25px;
+  font-size: 14px;
+  line-height: 25px;
+  padding: 10px;
+  padding-top: 0;
+  margin: 0 auto;
+  margin-bottom: 0;
+  width: 580px;
+  text-align: center;
+}
+#jobid{
+  margin-top: 25px; 
+  font-size: 15px; 
+  padding: 13px; 
+  margin: 25px auto; 
+  text-align: center;
+}
+.jobinfo-result{
+  border-left: 4px solid #1abc9c; 
+  padding-left: 5px; 
+  display: block; 
+  margin-bottom: 4px;
+}
+#new-rscript{
+  float: left; 
+  margin-right: 5px; 
+  margin-bottom: 13px; 
+  padding: 4px 9px; 
+  margin-top: 3px;
+}
+.treeview-channels{
+  height: 31px;
+}
+#spinner-container{
+  position: relative; 
+  margin-left: 145px;
+}
+#execute-spinner-container{
+  position: relative; 
+  margin: 10px 0;
+}

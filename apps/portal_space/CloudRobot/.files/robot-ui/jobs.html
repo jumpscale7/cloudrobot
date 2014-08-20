@@ -28,18 +28,18 @@
         <div class="navbar-collapse collapse" id="navbar-main">
         <ul class="nav navbar-nav">
             <li>
-              <a href="index.html" style="padding-top: 10px; font-size: 14px;">Rscripts</a>
+              <a href="index.html" class="ptm font-14">Rscripts</a>
             </li>
             <li>
-              <a href="jobs.html" style="padding-top: 10px; font-size: 14px;">Jobs</a>
+              <a href="jobs.html" class="ptm font-14">Jobs</a>
             </li>
             <li>
-              <a href="execute.html" style="padding-top: 10px; font-size: 14px;">Execute</a>
+              <a href="execute.html" class="ptm font-14">Execute</a>
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="padding-top: 10px; font-size: 14px;">Hey {{user}} <span class="caret"></span></a>
+              <a class="dropdown-toggle ptm font-14" data-toggle="dropdown" href="#">Hey {{user}} <span class="caret"></span></a>
               <ul class="dropdown-menu" aria-labelledby="ddl1">
                 <li><a href="#" data-toggle="modal" data-target="#showSecretModal">secrets</a></li>
                 <li><a href="#" ng-click="logout()">logout</a></li>
@@ -60,20 +60,23 @@
             <input ng-model="secretcodes" type="text" placeholder="Enter a secret code.." class="form-control" required>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" ng-click="saveSecret()" style="padding: 5px 10px;">Save</button>
-            <button type="button" class="btn btn-default" ng-click="closeModal()" style="padding: 5px 10px;">Cancel</button>
+            <button type="button" class="btn btn-primary pvs phm" ng-click="saveSecret()">Save</button>
+            <button type="button" class="btn btn-default pvs phm" ng-click="closeModal()">Cancel</button>
           </div>
         </div>
       </div>
     </div>
     <div id="main" class="container">
-        <div class="row" style="margin-top: 25px; margin-left: 0;">
+        <div id="alerts-block" class="row">
           <div ng-controller="jobsController">
+          <div class="alert alert-warning sample-show-hide alert-msg" ng-show="secretsWarnAlert" role="alert">
+            <span>Please add secret code first.. <a href="#" data-toggle="modal" data-target="#showSecretModal">add now</a></span>
+          </div>
           <h1 style="font-weight: normal; margin-top: 0; margin-bottom: 15px;">Jobs</h1>
-          <div class="alert alert-warning sample-show-hide" ng-show="snippetMsg" role="alert" style="height: 25px;font-size: 14px;line-height: 25px;padding: 10px;padding-top: 0;margin: 0 auto;margin-bottom: 0;width: 400px; text-align: center;">
+          <div class="alert alert-warning sample-show-hide alert-msg" ng-show="snippetMsg" role="alert">
             {{snippetMsg}}
           </div>
-          <div class="alert alert-danger sample-show-hide" ng-show="errorAlert" role="alert" style="height: 25px;font-size: 14px;line-height: 25px;padding: 10px;padding-top: 0;margin: 0 auto;margin-bottom: 0;width: 580px; text-align: center;">
+          <div class="alert alert-danger sample-show-hide alert-msg" ng-show="errorAlert" role="alert">
             <span ng-if="errorAlert.status == 0">0: Internal server error, please try again later.</span>
             <span ng-if="errorAlert.status != 0">{{errorAlert.status}}: {{errorAlert.data}}</span>        
           </div>
@@ -82,7 +85,7 @@
               <input type="text" class="form-control" placeholder="Any part of rscript name." style="margin: 15px auto; width: 80%; height: 35px;" ng-model="rscriptNameFilter">
             </div>
             <div class="col-md-4">
-            <div style="position: relative; margin-left: 145px;" class="clearfix">
+            <div id="spinner-container" class="clearfix">
               <span spinner-key="spinner" us-spinner="{lines: 9,length: 5, width: 3, radius: 4, corners: 0.6, rotate: 28, direction: 1, color: '#1abc9c', speed: 1.1, trail: 56, shadow: false, hwaccel: false, className: 'spinner', zIndex: 0 , top: '35%', left: '20%'}"></span>
             </div>
               <input type="text" class="form-control" placeholder="Time range.. e.g. -4h" style="margin: 15px auto; width: 80%; height: 35px;" ng-model="timeRangeAgo">
@@ -96,7 +99,7 @@
             </div>
           </div>
             <div style="text-align: center; margin-bottom: 40px;">
-              <a href="#" class="btn btn-primary" style="padding: 6px 35px;" ng-click="filterJobs()">Search</a>
+              <a href="#" class="btn btn-primary" style="padding: 6px 35px;" ng-click="filterJobs()" ng-disabled="secretsWarnAlert">Search</a>
             </div>
             <div class="">
               <table class="table">
@@ -128,7 +131,7 @@
                       <h6 class="modal-title" id="myModalLabel">Job details</h6>
                     </div>
                     <div class="modal-body" style="overflow-y: scroll; max-height: 400px;">
-                      <div style="font-size: 14px;">
+                      <div class="font-14">
                         <strong>Channel: </strong>{{jobinfo.rscript_channel}}
                         <br/>
                         <strong>Rscript name: </strong>{{jobinfo.rscript_name}}
@@ -143,17 +146,17 @@
                         <br/>
                         <strong>Content: </strong>
                         <br/>
-                        <span ng-bind-html="jobinfo.rscript_content | to_trustedHTML" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
+                        <span ng-bind-html="jobinfo.rscript_content | to_trustedHTML" class="jobinfo-result"></span>
                         <strong>Result: </strong>
                         <br/>
-                        <span ng-bind-html="jobinfo.result | to_trustedHTML" style="border-left: 4px solid #1abc9c; padding-left: 5px; display: block; margin-bottom: 4px;"></span>
+                        <span ng-bind-html="jobinfo.result | to_trustedHTML" class="jobinfo-result"></span>
                         <strong>State: </strong>{{jobinfo.state}}
                         <br/>
                         <strong>User: </strong>{{jobinfo.user}}
                       </div>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-primary" ng-click="closeModal()" style="padding: 5px 10px;">Ok</button>
+                      <button type="button" class="btn btn-primary pvs phm" ng-click="closeModal()">Ok</button>
                     </div>
                   </div>
                 </div>
@@ -187,7 +190,7 @@
         <div class="row">
           <div class="col-md-3 pull-right">
             <div class="footer-banner">
-              <a href="http://Mothership1.com" style="text-decoration: none; font-size: 13px;">Mothership1.com</a>              
+              <a href="http://Mothership1.com" class="font-13 text-decoration-none">Mothership1.com</a>              
             </div>
           </div>
         </div>

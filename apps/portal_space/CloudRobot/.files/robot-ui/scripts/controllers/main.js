@@ -144,15 +144,43 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
             }else if(userResult.status == 200){
               secrets.get().then(
                   function (result) {
+                      localStorage.user = userResult.data;
+                      $scope.user = userResult.data;
                       if(result.status != 200){
-                        $scope.errorAlert = result;
+                        if(result.status == 404){
+                          // $scope.secretsWarnAlert = true;
+                          secrets.set($scope.user, '""').then(
+                            function(result) {
+                              if(result.status != 200){
+                                $scope.errorAlert = result;
+                              }else{
+                                localStorage.secretcodes = '""';
+                                $scope.secretcodes = localStorage.secretcodes;
+                                if(localStorage.secretcodes == "null" || localStorage.secretcodes == 'undefined'){
+                                  localStorage.secretcodes = '""';
+                                  $scope.secretcodes = '""';
+                                }else{
+                                  $scope.secretcodes = localStorage.secretcodes;
+                                }
+                                if($location.$$absUrl.indexOf('index.html') > 0){
+                                  $scope.buildTreeView($scope.selectedChannel);
+                                }
+                              }
+                            }
+                            ,function (reason) {
+                                $scope.errorAlert = reason;
+                            }
+                          );
+                        }else{
+                          $scope.errorAlert = result;
+                        }
                       }else{ 
                             localStorage.secretcodes = result.data;
-                            localStorage.user = userResult.data;
-                            $scope.user = userResult.data;
-                            localStorage.secretcodes = result.data;
+                            // localStorage.user = userResult.data;
+                            // $scope.user = userResult.data;
                             if(localStorage.secretcodes == "null" || localStorage.secretcodes == 'undefined'){
-                              $scope.secretcodes = '';
+                              localStorage.secretcodes = '""';
+                              $scope.secretcodes = '""';
                             }else{
                               $scope.secretcodes = localStorage.secretcodes;
                             }
@@ -182,7 +210,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
           $scope.secretcodes = null;
         }
           if($scope.user){
-            secrets.set( $scope.user ,$scope.secretcodes).then(
+            secrets.set($scope.user, $scope.secretcodes).then(
               function(result) {
                 if(result.status != 200){
                   $scope.errorAlert = result;
@@ -190,6 +218,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                 }else{
                   localStorage.secretcodes = $scope.secretcodes;
                   $('#showSecretModal').modal('hide');
+                  $scope.secretsWarnAlert = "";
                   $scope.buildTreeView();
                   $scope.bulidJobList = $scope.secretcodes;
                 }
@@ -199,6 +228,8 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
 
               });
               if($scope.secretcodes == null){
+                localStorage.secretcodes = '""';
+                $scope.secretcodes = '""';
                 $scope.bulidJobList = "null";
               }
           }
