@@ -283,7 +283,7 @@ class TxtRobot():
         rc=0
 
         for line in splitted:
-            # print "process:%s"%line
+            print "process:%s"%line
             line=line.strip()
 
             if line.find(">ERROR:")==0:
@@ -427,9 +427,11 @@ class TxtRobot():
     def processCmd(self, cmdblock,entity, cmd, args,gargs):
         print "EXECUTE:\n%s"%cmdblock
         self.message2session("CMD:%s"%cmd)
+
         args=copy.copy(args)
         for key,val in gargs.iteritems():
-            args[key]=val
+            if not args.has_key(key):
+                args[key]=val
         
         for key,val in args.iteritems():
             if val.find("#")<>-1:

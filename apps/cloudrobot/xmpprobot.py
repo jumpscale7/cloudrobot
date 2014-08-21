@@ -15,6 +15,8 @@ from robots import *
 login=j.servers.cloudrobot.hrd.get("cloudrobot.xmpp.login")
 passwd=j.servers.cloudrobot.hrd.get("cloudrobot.xmpp.passwd")
 
+print login
+print passwd
 j.servers.cloudrobot.startXMPPRobot(login,passwd,robots=robots)
 
 j.application.stop(0)

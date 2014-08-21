@@ -8,6 +8,41 @@ import JumpScale.baselib.remote
 import JumpScale.baselib.redis
 import JumpScale.portal
 import ujson as json
+import sys 
+
+class Output(object):
+    def __init__(self):
+        self.out=""
+        self.lastlines=""
+        self.counter=0
+
+    def _write(self):
+        self.lastlines=self.lastlines.replace("\n\n","\n")
+        self.lastlines=self.lastlines.replace("\n\n","\n")
+        self.lastlines=self.lastlines.replace("\n\n","\n")
+        j.servers.cloudrobot.sendUserMessage("admin",self.lastlines,html=False) 
+        self.lastlines=""
+        self.counter=0
+
+    def write(self, buf,**args):
+        if self.lastlines.find(buf)==-1:
+            self.lastlines+="%s\n"%buf
+            if self.counter>20:
+                self._write()
+            if len(self.lastlines.split("\n"))>20:
+                self._write()
+            self.counter+=1
+
+        # self.stdout.prevout.write(buf) 
+        # for line in buf.rstrip().splitlines():
+        #     #print "###%s"%line
+        #     self.out+="%s\n"%line
+
+    def isatty(self):
+        return False
+
+    def flush(self):
+        return None
 
 class MS1(object):
 
@@ -15,6 +50,8 @@ class MS1(object):
         self.secret = ''
         self.IMAGE_NAME = 'Ubuntu 14.04 (JumpScale)'
         self.redis_cl = j.clients.redis.getGeventRedisClient('localhost', 7768)
+        self.stdout=Output()
+        self.stdout.prevout=sys.stdout
 
 
     def getCloudspaceObj(self, space_secret,**args):
@@ -374,13 +411,7 @@ class MS1(object):
 
     def _getSSHConnection(self, spacesecret, name, **args):
         api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
-        cloudspaces_actor = api.getActor('cloudapi', 'cloudspaces')
-
-        machine = machines_actor.get(machine_id)
-        if machine['cloudspaceid'] != cloudspace_id:
-            return 'Machine %s does not belong to cloudspace whose secret is given' % name
         
-
         mkey="%s_%s"%(cloudspace_id,machine_id)
         print "check ssh connection:%s"%mkey
         if self.redis_cl.hexists("ms1_iaas:machine:sshpub",mkey):
@@ -397,6 +428,14 @@ class MS1(object):
                     from IPython import embed
                     print "DEBUG NOW _getSSHConnection error"
                     embed()
+
+        cloudspaces_actor = api.getActor('cloudapi', 'cloudspaces')
+
+        machine = machines_actor.get(machine_id)
+        if machine['cloudspaceid'] != cloudspace_id:
+            return 'Machine %s does not belong to cloudspace whose secret is given' % name
+
+
         print "RECREATE SSH CONNECTION"                
         portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
         items=portforwarding_actor.list(cloudspace_id)
@@ -458,23 +497,49 @@ class MS1(object):
 
         return ssh_connection
 
-    def execSshScript(self, spacesecret, name, script,**args):
-        
+    def execSshScript(self, spacesecret, name,**args):
+
         ssh_connection=self._getSSHConnection(spacesecret,name,**args)
 
-        out=""
-        for line in script.split("\n"):
-            line=line.strip()
-            if line.strip()=="":
-                continue
-            if line[0]=="#":
-                continue
-            out+="%s\n"%line
-            print line
-            result= ssh_connection.sudo(line+"\n")
-            out+="%s\n"%result
-            print result
 
-        self._deletePortForwardRule(spacesecret, name,cloudspace['publicipaddress'],1033,"tcp")
+        if args.has_key("lines"):
+            script=args["lines"]
+            out=""
+            for line in script.split("\n"):
+                line=line.strip()
+                if line.strip()=="":
+                    continue
+                if line[0]=="#":
+                    continue
+                out+="%s\n"%line
+                print line
+                
+                result= ssh_connection.run(line+"\n")
+                out+="%s\n"%result
+                print result
 
-        return result
+        elif args.has_key("script"):
+            script=args["script"]
+            script="set +ex\n%s"%script
+            ssh_connection.file_write("/tmp/do.sh",script)
+            ssh_connection.fabric.context_managers.show("output")
+
+            from cStringIO import StringIO
+            import sys
+            
+            sys.stdout=self.stdout
+
+            # ssh_connection.run("sh /tmp/do.sh", pty=False, combine_stderr=True,stdout=fh)
+            try:
+                out=ssh_connection.run("sh /tmp/do.sh",combine_stderr=True)
+            except BaseException,e:
+                sys.stdout=self.stdout.prevout
+                print e
+                raise RuntimeError("E:Could not execute sshscript, errors.")
+            sys.stdout=self.stdout.prevout
+                
+        else:
+            raise RuntimeError("E:Could not find param script or lines")
+
+
+        return out
