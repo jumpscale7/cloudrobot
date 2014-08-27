@@ -13,18 +13,85 @@ import sys
 class Empty():
     pass
 
+class Session():
+    def __init__(self,ddict={}):
+        if ddict<>{}:
+            self__dict__=ddict
+        self.name=""
+        self.userid=""
+        self.moddate=j.base.time.getTimeEpoch()
+        self.retchannels=["xmpp"]
+        self.loglevel=5
+        self.channel="ms1_iaas"
+        self.jobs=[]
+        self.userXmpp=[]
+
+    def save(self):
+        self.redis.hset("cloudrobot:sessions:%s"%(self.userid),self.name),json.dumps(self.__dict__))
+
+    def sendUserMessage(self,msg,html=False):                
+        if self.retchannel=="xmpp":
+            if self.userXmpp==[]:
+                user=j.servers.cloudrobot.userGet(self.userid)
+                self.userXmpp=user.xmpp
+                self.save()
+            for xmpp in self.userXmpp:
+                if html:
+                    self.redisq_xmpp.put("2:%s:%s"%(xmpp,str(msg)))
+                else:
+                    self.redisq_xmpp.put("1:%s:%s"%(xmpp,str(msg)))
+
+class Job():
+    def __init__(self,ddict={}):
+        if ddict=={}:        
+            cl = j.servers.cloudrobot.osis_robot_job
+            print "new job"
+            job = cl.new()
+            self.__dict__=job.__dict__
+            self.start = j.base.time.getTimeEpoch()
+            self.state = "INIT"
+        else:
+            self.__dict__=ddict
+
+    def _getQueue(self,job):    
+        queue=j.clients.redis.getGeventRedisQueue("127.0.0.1", 7768, "robot:queues:%s" % job.guid)
+
+    def save(self):
+        q=self._getQueue(job)
+        data=json.dumps(self.__dict__)
+        
+        if self.end<>0:
+            n=j.base.time.getTimeEpoch()
+            print "QUEUE OK"
+            q.put(str(n))
+            q.set_expire(n+120)
+            if j.servers.cloudrobot.redis.hexists("robot:jobs",self.guid):
+                j.servers.cloudrobot.redis.hdel("robot:jobs",self.guid)
+        else:
+            j.servers.cloudrobot.redis.hset("robot:jobs",self.guid,data)
+
+    def waitExecutionDone(self,jobguid):
+        print "wait for job:%s"%jobguid
+        # while q.empty():
+        #     print "queue empty for %s"%jobguid
+        #     time.sleep(0.1)
+        q=self._getQueue(job)
+        q.get()
+        return 
+
+
+
 class CloudRobotFactory(object):
     def __init__(self):
         self.hrd=None
         
-    def init(self):
+    def init(self,robots):
+        self.robots=robots
         return self._init()
 
     def _init(self):
         j.cloudrobot=Empty()
-        j.cloudrobot.vars={}
-        j.cloudrobot.verbosity=2
-
+ 
         self.redisq_xmpp=j.clients.redis.getRedisQueue("127.0.0.1", 7768,"xmpp")
         ppath="%s/apps/cloudrobot/"%j.dirs.baseDir
         if ppath not in sys.path:
@@ -40,7 +107,6 @@ class CloudRobotFactory(object):
         self.osis_system_user = j.core.osis.getClientForCategory(self.osis, 'system', 'user')
         self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
         self.domain=self.hrd.get("cloudrobot.mail.domain")
-
 
     def startMailServer(self,robots={}):
         self._init()
@@ -70,31 +136,30 @@ class CloudRobotFactory(object):
         robot.robots=robots
         robot.start()
 
-    def job2redis(self,job):
-        q=self._getQueue(job)
-        data=json.dumps(job.obj2dict())
-        self.redis.hset("robot:jobs",job.guid,data)   
-        print "job:%s to redis"%job.guid
-        if job.end<>0:
-            n=j.base.time.getTimeEpoch()
-            print "QUEUE OK"
-            q.put(str(n))
-            q.set_expire(n+120)
+    def jobNew(self,channel,msg,rscriptname,args={},userid=None,sessionid=None):
+        job=Job()
+        job.rscript_channel=channel
+        job.rscript_content=msg
+        job.rscript_name=rscriptname
+        job.session=sessionid
+        job.user=userid
+        job.guid=j.base.idgenerator.generateGUID()
+        job.save()
+        return job.guid
 
-    def jobWait(self,jobguid):
-        q=j.clients.redis.getGeventRedisQueue("127.0.0.1", 7768, "robot:queues:%s" % jobguid)
-        print "wait for job:%s"%jobguid
-        # while q.empty():
-        #     print "queue empty for %s"%jobguid
-        #     time.sleep(0.1)
-        jobguid=q.get()
-        return 
-        
-    def _getQueue(self,job):    
-        queue=j.clients.redis.getGeventRedisQueue("127.0.0.1", 7768, "robot:queues:%s" % job.guid)
-        return queue
-
-    def toFileRobot(self,channel,msg,mailfrom,rscriptname,args={},userid=None):
+    def jobGet(self,guid):
+        if self.redis.hexists("robot:jobs",self.guid):
+            data=self.redis.hget("robot:jobs",self.guid)
+            job=Job(ddict=ujson.loads(data))
+        else:
+            from IPython import embed
+            print "DEBUG NOW jobgetosis"
+            embed()
+            
+    def toFileRobot(self,job):
+        from IPython import embed
+        print "DEBUG NOW toFileRobot"
+        embed()
         
         # msg=j.tools.text.toAscii(msg)
 
@@ -151,15 +216,9 @@ class CloudRobotFactory(object):
         j.system.fs.writeFile(path,msg)
 
         return guid
-
-
-    def getUserGuidOrEmail(self,email):
-        if email.find("<")<>-1:
-            email=email.split("<",1)[1]
-            email=email.split(">",1)[0]        
-        return email        
+  
         
-    def getUserIdFromXmpp(self,xmpp=""):
+    def userIdGetFromXmpp(self,xmpp=""):
         if self.redis.hexists("cloudrobot:users:xmpp",xmpp):
             #found the user
             userid=self.redis.hget("cloudrobot:users:xmpp",xmpp)
@@ -173,78 +232,34 @@ class CloudRobotFactory(object):
             userid=self.redis.hset("cloudrobot:users:xmpp",xmpp,userid)
         return userid
             
-    def getUserState(self,userid):
-        default={"state":"","session":"0","moddate":j.base.time.getTimeEpoch(),"retchannel":"xmpp","loglevel":5,"channel":"ms1_iaas"}
-        if not self.redis.hexists("cloudrobot:users:state",userid):            
-            self.redis.hset("cloudrobot:users:state",userid,json.dumps(default))
-        data=json.loads(self.redis.hget("cloudrobot:users:state",userid))
-        if not data.has_key("loglevel") or not data.has_key("retchannel") or not data.has_key("channel"):
-            self.redis.hset("cloudrobot:users:state",userid,json.dumps(default))
-            data=json.loads(self.redis.hget("cloudrobot:users:state",userid))
-        return data
+    def sessionGet(self,userid,session):
+        if not self.redis.hexists("cloudrobot:sessions:%s"%(userid),session):
+            session=Session()
+            session.userid=userid
+            session.name=name
+            session.save()
+        else:
+            data=json.loads(self.redis.hget("cloudrobot:sessions:%s"%(userid),session))
+            session=Session(ddict=data)
+        return session
 
-    def sendUserMessage(self,userid,msg,html=False):        
-        state=self.getUserState(userid)
-        user=self.getUserObject(userid)
-        if state["retchannel"]=="xmpp":
-            for xmpp in user["xmpp"]:
-                if html:
-                    self.redisq_xmpp.put("2:%s:%s"%(xmpp,str(msg)))
-                else:
-                    self.redisq_xmpp.put("1:%s:%s"%(xmpp,str(msg)))
+    def userGet(self,userid):
+        # if not self.redis.hexists("cloudrobot:users:obj",userid):
+        res=self.osis_system_user.simpleSearch({"id":userid})
+        if len(res)==0:
+            j.events.inputerror_critical("Could not find user with id:%s"%userid,"cloudrobot.auth")            
+        user=self.osis_system_user.get(res[0]["guid"])
+        # self.redis.hset("cloudrobot:users:obj",userid,json.dumps(user.__dict__))
+        # obj=json.loads(self.redis.hget("cloudrobot:users:obj",userid))
+        return user
 
-    def getUserObject(self,userid):
-        if not self.redis.hexists("cloudrobot:users:obj",userid):
-            res=self.osis_system_user.simpleSearch({"id":userid})
-            if len(res)==0:
-                j.events.inputerror_critical("Could not find user with id:%s"%userid,"cloudrobot.auth")            
-            user=self.osis_system_user.get(res[0]["guid"])
-            self.redis.hset("cloudrobot:users:obj",userid,json.dumps(user.__dict__))
-        obj=json.loads(self.redis.hget("cloudrobot:users:obj",userid))
-        return obj
+    def sessionGetVar(self,userid,session,key):
+        data=self.redis.hset("cloudrobot:sessionvars:%s:%s"%(userid,session),key)
+        return json.loads(data)
 
-    def getUserSessionId(self,userid):
-        state=self.getUserState(userid)
-        return state["session"]
+    def sessionSetVar(self,userid,session,key,value):
+        self.redis.hset("cloudrobot:sessionvars:%s:%s"%(userid,session),key,json.dumps(value))
 
-    def setUserSessionId(self,userid,session):
-        state=self.getUserState(userid)
-        state["session"]=session
-        self.redis.hset("cloudrobot:users:state",userid,json.dumps(state))
-
-    def setUserSessionState(self,userid,sessionstate):
-        state=self.getUserState(userid)
-        state["state"]=sessionstate
-        self.redis.hset("cloudrobot:users:state",userid,json.dumps(state))
-
-    def setUserSessionLoglevel(self,userid,loglevel):
-        state=self.getUserState(userid)
-        state["loglevel"]=int(loglevel)
-        self.redis.hset("cloudrobot:users:state",userid,json.dumps(state))
-
-    def setUserSessionChannel(self,userid,channel):
-        state=self.getUserState(userid)
-        state["channel"]=channel
-        self.redis.hset("cloudrobot:users:state",userid,json.dumps(state))
-
-    def getUserGlobals(self,userid):
-        state=self.getUserState(userid)
-        key="%s_%s"%(userid,state["session"])
-        if not self.redis.hexists("cloudrobot:users:globals",key):
-            self.redis.hset("cloudrobot:users:globals",key,json.dumps({}))
-        gglobals=json.loads(self.redis.hget("cloudrobot:users:globals",key))
-        return gglobals
-
-    def setUserGlobals(self,userid,args={}):
-        key="%s_%s"%(userid,self.getUserSessionId(userid))
-        gglobals=self.getUserGlobals(userid)
-        gglobals.update(args)
-
-        for item in ["msg_jobguid"]:
-            if gglobals.has_key(item):
-                gglobals.pop(item)
-        self.redis.hset("cloudrobot:users:globals",key,json.dumps(gglobals))
-
-    def clearUserGlobals(self,userid):
-        key="%s_%s"%(userid,self.getUserSessionId(userid))
-        self.redis.hset("cloudrobot:users:globals",key,json.dumps({}))
+    def sessionClear(self,userid,session):
+        self.redis.delete("cloudrobot:sessionvars:%s:%s"%(userid,session))
+        self.redis.hdel("cloudrobot:sessions:%s"%(userid),session))

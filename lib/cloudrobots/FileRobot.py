@@ -17,7 +17,7 @@ class FileRobot():
                 return val.strip()
         return None
 
-    def findCmd(self,C):
+    def findCmdExists(self,C):
         for line in C.split("\n"):
             line=line.strip()
             print line    

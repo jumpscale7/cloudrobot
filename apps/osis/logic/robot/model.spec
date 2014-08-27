@@ -31,6 +31,8 @@
     prop:rscript_channel str,,
     prop:rscript_name str,,
     prop:rscript_content str,,
+    prop:globals str,,
+    prop:session str,,
     prop:onetime bool,,if just an adhoc script executed once
     prop:user str,,
     prop:result str,,
