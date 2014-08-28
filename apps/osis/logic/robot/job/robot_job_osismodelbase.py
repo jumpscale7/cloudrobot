@@ -10,6 +10,10 @@ class robot_job_osismodelbase(j.code.classGetJSRootModelBase()):
     
         self._P_rscript_content=""
     
+        self._P_globals=""
+    
+        self._P_session=""
+    
         self._P_onetime=True
     
         self._P_user=""
@@ -113,6 +117,46 @@ class robot_job_osismodelbase(j.code.classGetJSRootModelBase()):
     @rscript_content.deleter
     def rscript_content(self):
         del self._P_rscript_content
+
+
+    @property
+    def globals(self):
+        return self._P_globals
+    @globals.setter
+    def globals(self, value):
+        
+        if not isinstance(value, str) and value is not None:
+            if isinstance(value, basestring) and j.basetype.string.checkString(value):
+                value = j.basetype.string.fromString(value)
+            else:
+                msg="property globals input error, needs to be str, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: job, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_globals=value
+    @globals.deleter
+    def globals(self):
+        del self._P_globals
+
+
+    @property
+    def session(self):
+        return self._P_session
+    @session.setter
+    def session(self, value):
+        
+        if not isinstance(value, str) and value is not None:
+            if isinstance(value, basestring) and j.basetype.string.checkString(value):
+                value = j.basetype.string.fromString(value)
+            else:
+                msg="property session input error, needs to be str, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: job, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_session=value
+    @session.deleter
+    def session(self):
+        del self._P_session
 
 
     @property
