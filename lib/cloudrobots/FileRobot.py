@@ -17,14 +17,6 @@ class FileRobot():
                 return val.strip()
         return None
 
-    def findCmdExists(self,C):
-        for line in C.split("\n"):
-            line=line.strip()
-            print line    
-            if line.find("!")==0:
-                return True
-        return False
-
     def start(self):
 
         for channel in self.robots.keys():
@@ -46,35 +38,26 @@ class FileRobot():
 
                     userid=self.findGlobal(C,"msg_userid")
                     if userid==None:
-                        userid=""
+                        userid="robot"
 
                     name="%s_%s_%s_%s.txt"%(j.base.time.getTimeEpoch(),j.base.time.getLocalTimeHRForFilesystem(),name0,userid)
                     # j.system.fs.writeFile("%s/%s/jobs/%s"%(self.basepath,channel,name),C)
 
-                    cl = j.servers.cloudrobot.osis_robot_job
-
                     print "PROCESS:%s"%path            
+
+                    session=j.servers.cloudrobot.sessionGet(userid,"file",reset=True)
+                    session.channel=channel
+                    session.outpath="%s/%s/out/%s"%(self.basepath,channel,name)
+                    session.retchannels=["file"]
+                    session.userid=userid
+                    session.save()                    
+
+                    job=j.servers.cloudrobot.jobNew(channel, msg=C, rscriptname=name0, args={}, userid=userid, sessionid=session.name)
+
+                    from IPython import embed
+                    print "DEBUG NOW ooo"
+                    embed()
                     
-                    if self.findCmd(C):
-                        jobguid=self.findGlobal(C,"msg_jobguid")
-                        if jobguid==None:
-                            print "new job"
-                            job = cl.new()
-                            job.start = j.base.time.getTimeEpoch()
-                            job.rscript_name = name0
-                            job.rscript_content = C
-                            job.rscript_channel = channel
-                            job.onetime = True
-                            mailfrom=self.findGlobal(C,"msg_email")
-                            job.user = userid
-                        else:
-                            job=cl.get(jobguid)
-                            print "existing job:%s"%jobguid
-                        job.state = "RUNNING"
-                        tmp, tmp, guid=cl.set(job)
-                        j.servers.cloudrobot.job2redis(job)
-                    else:
-                        jobguid=None
 
                     result=self.robots[channel].process(C)
 

@@ -5,7 +5,7 @@ from .FileRobot import FileRobot
 import JumpScale.baselib.redis
 import ujson as json
 import time
-
+import JumpScale.baselib.redisworker
 import JumpScale.grid.osis
 
 import sys
@@ -16,58 +16,110 @@ class Empty():
 class Session():
     def __init__(self,ddict={}):
         if ddict<>{}:
-            self__dict__=ddict
-        self.name=""
-        self.userid=""
-        self.moddate=j.base.time.getTimeEpoch()
-        self.retchannels=["xmpp"]
-        self.loglevel=5
-        self.channel="ms1_iaas"
-        self.jobs=[]
-        self.userXmpp=[]
+            self.__dict__=ddict
+        else:
+            self.name=""
+            self.userid=""
+            self.moddate=j.base.time.getTimeEpoch()
+            self.retchannels=["xmpp"]
+            self.loglevel=5
+            self.channel="ms1_iaas"
+            self.jobs=[]
+            self.userXmpp=[]
+            self.outpath=""
 
     def save(self):
-        self.redis.hset("cloudrobot:sessions:%s"%(self.userid),self.name),json.dumps(self.__dict__))
+        j.servers.cloudrobot.redis.hset("cloudrobot:sessions:%s"%(self.userid),self.name,json.dumps(self.__dict__))
 
     def sendUserMessage(self,msg,html=False):                
-        if self.retchannel=="xmpp":
+        if "xmpp" in self.retchannel:
             if self.userXmpp==[]:
                 user=j.servers.cloudrobot.userGet(self.userid)
                 self.userXmpp=user.xmpp
                 self.save()
             for xmpp in self.userXmpp:
                 if html:
-                    self.redisq_xmpp.put("2:%s:%s"%(xmpp,str(msg)))
+                    j.servers.cloudrobot.redisq_xmpp.put("2:%s:%s"%(xmpp,str(msg)))
                 else:
-                    self.redisq_xmpp.put("1:%s:%s"%(xmpp,str(msg)))
+                    j.servers.cloudrobot.redisq_xmpp.put("1:%s:%s"%(xmpp,str(msg)))
+        elif "file" in self.retchannel:
+            from IPython import embed
+            print "DEBUG NOW msg to file"
+            embed()
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    __str__=__repr__
+            
 
 class Job():
     def __init__(self,ddict={}):
         if ddict=={}:        
             cl = j.servers.cloudrobot.osis_robot_job
             print "new job"
-            job = cl.new()
-            self.__dict__=job.__dict__
-            self.start = j.base.time.getTimeEpoch()
-            self.state = "INIT"
+            job = cl.new()            
+            self.model=job
+            self.model.start = j.base.time.getTimeEpoch()
+            self.model.state = "INIT"
         else:
             self.__dict__=ddict
 
-    def _getQueue(self,job):    
-        queue=j.clients.redis.getGeventRedisQueue("127.0.0.1", 7768, "robot:queues:%s" % job.guid)
+    def _getQueue(self):    
+        queue=j.clients.redis.getGeventRedisQueue("127.0.0.1", 7768, "robot:queues:%s" % self.guid)
+        return queue
+
+    def _executePrepare(self):
+        msg=self.model.rscript_content
+        if msg.strip()=="":
+            raise RuntimeError("Cannot be empty msg")
+
+
+
+        return guid
+
+    def executeAsync(self,job):
+        self._executePrepare()
+
+        def execRobotJob(robotspath):
+            from IPython import embed
+            print "DEBUG NOW ooo"
+            embed()
+        
+        job=j.clients.redisworker.execFunction(atest,robotspath=j.servers.cloudrobot.robotspath,\
+            _category="robot", _organization="jumpscale",_timeout=600,\
+            _queue="io",_log=True,_sync=False)
+
+
+
+    def getAsMsg(self):
+        premsg=""
+        if msg[-1]<>"\n":
+            msg+="\n"
+        for key in args.keys():
+            premsg+="@%s=%s\n"%(key,args[key])
+        msg="%s\n%s\n"%(premsg,msg)
+
+
 
     def save(self):
-        q=self._getQueue(job)
-        data=json.dumps(self.__dict__)
         
-        if self.end<>0:
+        if self.model.end<>0:
             n=j.base.time.getTimeEpoch()
             print "QUEUE OK"
+            q=self._getQueue()
             q.put(str(n))
             q.set_expire(n+120)
+            #save job in osis
+
+            from IPython import embed
+            print "DEBUG NOW save"
+            embed()
+            
             if j.servers.cloudrobot.redis.hexists("robot:jobs",self.guid):
                 j.servers.cloudrobot.redis.hdel("robot:jobs",self.guid)
         else:
+            data=json.dumps(self.model.__dict__)        
             j.servers.cloudrobot.redis.hset("robot:jobs",self.guid,data)
 
     def waitExecutionDone(self,jobguid):
@@ -78,6 +130,11 @@ class Job():
         q=self._getQueue(job)
         q.get()
         return 
+
+    def __repr__(self):       
+        return str(self.model)
+
+    __str__=__repr__
 
 
 
@@ -102,38 +159,34 @@ class CloudRobotFactory(object):
             raise RuntimeError("hrd not specified yet.")
         osisinstance=self.hrd.get("cloudrobot.osis.connection")
         self.osis =j.core.osis.getClientByInstance(osisinstance)        
-        self.osis_robot_job = j.core.osis.getClientForCategory(self.osis, 'robot', 'job')        
+        self.osis_robot_job = j.core.osis.getClientForCategory(self.osis, 'robot', 'job')
         self.osis_oss_user = j.core.osis.getClientForCategory(self.osis, 'oss', 'user')
         self.osis_system_user = j.core.osis.getClientForCategory(self.osis, 'system', 'user')
         self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
         self.domain=self.hrd.get("cloudrobot.mail.domain")
 
-    def startMailServer(self,robots={}):
+    def startMailServer(self):
         self._init()
         from .MailRobot import MailRobot
         robot = MailRobot(('0.0.0.0', 25),hrd_instance=self.hrd)
-        robot.robots=robots
         print "start server on port:25"
         robot.serve_forever()
 
-    def startHTTP(self, addr='0.0.0.0', port=8099,robots={}):
+    def startHTTP(self, addr='0.0.0.0', port=8099):
         self._init()
         from .HTTPRobot import HTTPRobot
         robot=HTTPRobot(addr=addr, port=port)
-        robot.robots=robots
         robot.start()
 
-    def startXMPPRobot(self,username,passwd,robots={}):
+    def startXMPPRobot(self,username,passwd):
         self._init()
         from .XMPPRobot import XMPPRobot        
         robot=XMPPRobot(username=username, passwd=passwd)
-        robot.robots=robots
         robot.init()     
 
-    def startFileRobot(self,robots={}):
+    def startFileRobot(self):
         self._init()
         robot=FileRobot()
-        robot.robots=robots
         robot.start()
 
     def jobNew(self,channel,msg,rscriptname,args={},userid=None,sessionid=None):
@@ -145,7 +198,7 @@ class CloudRobotFactory(object):
         job.user=userid
         job.guid=j.base.idgenerator.generateGUID()
         job.save()
-        return job.guid
+        return job
 
     def jobGet(self,guid):
         if self.redis.hexists("robot:jobs",self.guid):
@@ -156,66 +209,6 @@ class CloudRobotFactory(object):
             print "DEBUG NOW jobgetosis"
             embed()
             
-    def toFileRobot(self,job):
-        from IPython import embed
-        print "DEBUG NOW toFileRobot"
-        embed()
-        
-        # msg=j.tools.text.toAscii(msg)
-
-        if msg.strip()=="":
-            raise RuntimeError("Cannot be empty msg")
-
-        if msg[-1]<>"\n":
-            msg+="\n"
-        
-        robotdir=j.system.fs.joinPaths(j.dirs.varDir, 'cloudrobot', channel)
-        if not j.system.fs.exists(path=robotdir):
-            msg = 'Could not find robot for channel \'%s\' on fs. Please make sure you are sending to the right one, \'youtrack\' & \'machine\' & \'user\' are supported.'%channel
-            raise RuntimeError("E:%s"%msg)
-
-        args["msg_subject"]=rscriptname
-        args["msg_email"]=mailfrom
-        args["msg_channel"]=channel
-
-        if userid<>None:
-            args["msg_userid"]=userid
-
-        subject2=j.tools.text.toAscii(args["msg_subject"],80)
-        fromm="%s@%s"%(channel,self.domain)
-        fromm2=j.tools.text.toAscii(fromm)
-        filename="%s_%s.py"%(fromm2,subject2)
-
-        cl=self.osis_robot_job
-
-        job = cl.new()
-        job.start = j.base.time.getTimeEpoch()
-        job.rscript_name = rscriptname
-        job.rscript_content = msg
-        job.rscript_channel = channel
-        job.state = "PENDING"
-        job.onetime = True
-        if userid<>None:
-            job.user=userid
-        else:
-            job.user = self.getUserGuidOrEmail(mailfrom)
-        guid,tmp, tmp = cl.set(job)
-
-        args["msg_jobguid"]=job.guid
-
-        premsg=""
-        for key in args.keys():
-            premsg+="@%s=%s\n"%(key,args[key])
-        msg="%s\n%s\n"%(premsg,msg)
-
-        self.job2redis(job)
-
-        path=j.system.fs.joinPaths(j.dirs.varDir, 'cloudrobot', channel,'in',filename)
-        
-
-        j.system.fs.writeFile(path,msg)
-
-        return guid
   
         
     def userIdGetFromXmpp(self,xmpp=""):
@@ -232,15 +225,17 @@ class CloudRobotFactory(object):
             userid=self.redis.hset("cloudrobot:users:xmpp",xmpp,userid)
         return userid
             
-    def sessionGet(self,userid,session):
-        if not self.redis.hexists("cloudrobot:sessions:%s"%(userid),session):
+    def sessionGet(self,userid,name,reset=False):
+        # print "redis:'cloudrobot:sessions:%s' name:%s"%(userid,name)
+        if reset or not self.redis.hexists("cloudrobot:sessions:%s"%(userid),name):
             session=Session()
             session.userid=userid
             session.name=name
             session.save()
         else:
-            data=json.loads(self.redis.hget("cloudrobot:sessions:%s"%(userid),session))
+            data=json.loads(self.redis.hget("cloudrobot:sessions:%s"%(userid),name))
             session=Session(ddict=data)
+        
         return session
 
     def userGet(self,userid):
@@ -262,4 +257,4 @@ class CloudRobotFactory(object):
 
     def sessionClear(self,userid,session):
         self.redis.delete("cloudrobot:sessionvars:%s:%s"%(userid,session))
-        self.redis.hdel("cloudrobot:sessions:%s"%(userid),session))
+        self.redis.hdel("cloudrobot:sessions:%s"%(userid),session)

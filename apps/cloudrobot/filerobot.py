@@ -8,6 +8,8 @@ import JumpScale.lib.cloudrobots
 
 from robots import *
 
-j.servers.cloudrobot.startFileRobot(robots=robots)
+j.servers.cloudrobot.robots
+j.servers.cloudrobot.robotspath=j.system.fs.joinPaths(j.dirs.baseDir,"apps","cloudrobot","robots.py")
+j.servers.cloudrobot.startFileRobot()
 
 j.application.stop(0)

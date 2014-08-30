@@ -19,7 +19,6 @@ import JumpScale.baselib.mailclient
 
 robots={}
 
-
 if "ms1_iaas" in robots2:
     import JumpScale.lib.cloudrobotservices.ms1_iaas
     robots["ms1_iaas"]= j.robots.ms1_iaas.getRobot()
@@ -42,5 +41,11 @@ if "youtrack" in robots2:
 if "user" in robots2:        
     import JumpScale.lib.cloudrobotservices.usermgmt
     robots["user"]= j.robots.usermgmt.getRobot()
+
+import JumpScale.lib.cloudrobotservices.robotmgmt
+import JumpScale.lib.cloudrobotservices.test
+robots["test"]= j.robots.test.getRobot()
+robots["mgmt"]= j.robots.mgmt.getRobot()
+
 
 
