@@ -4,6 +4,29 @@ import ujson as json
 import JumpScale.lib.cloudrobots
 import JumpScale.baselib.mailclient
 
+
+from celery import Celery
+
+
+BROKER_URL = 'redis://localhost:7768/0'
+
+app = Celery('tasks', broker=BROKER_URL)
+
+app.conf.update(
+    CELERY_TASK_SERIALIZER='json',
+    CELERY_ACCEPT_CONTENT=['json'],  # Ignore other content
+    CELERY_RESULT_SERIALIZER='json',
+    CELERY_TIMEZONE='Europe/Oslo',
+    CELERY_ENABLE_UTC=True,
+    CELERY_RESULT_BACKEND = 'rpc',
+    CELERY_RESULT_PERSISTENT = True,
+    # CELERY_RESULT_BACKEND = BROKER_URL,
+)
+
+app.conf["CELERY_ALWAYS_EAGER"]=False
+
+
+
 robotdefinition="""
 
 user (u,users)
@@ -327,7 +350,7 @@ id.key.dsa.pub=
             result2[key.lower()]=[item.lower() for item in hrd.get("id.alias").split(",") if item.strip()<>""]
         return result2
 
-
+    @app.task
     def user__list(self,**args):
         
         out=""
