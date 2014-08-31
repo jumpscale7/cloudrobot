@@ -6,6 +6,10 @@
   border-radius: 5px;
 /*  overflow: visible;*/
 }
+.CodeMirror-hints{
+  min-width: 150px !important;
+  font-size: 80% !important;
+}
 #codeArea .CodeMirror-scroll { 
   /*max-height: 282px;*/
 }
