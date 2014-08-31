@@ -300,7 +300,7 @@ class TxtRobot():
             if cmd<>"" and (line[0]=="!" or line[0]=="@" or line.find("******")<>-1):
                 #end of cmd block                
                 cmdfound=True
-                res2,rc=self.processCmd(cmdblock,entity, cmd, args,gargs)
+                action=self.processCmd(cmdblock,entity, cmd, args,session,job)     
                 out+=res2
                 
                 if rc>0 and session.alwaysdie:
