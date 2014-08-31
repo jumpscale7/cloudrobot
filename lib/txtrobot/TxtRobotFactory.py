@@ -301,7 +301,7 @@ class TxtRobot():
                 #end of cmd block                
                 cmdfound=True
                 action=self.processCmd(cmdblock,entity, cmd, args,session,job)     
-                out+=res2
+                out+=action.model.result
                 
                 if rc>0 and session.alwaysdie:
                     break
