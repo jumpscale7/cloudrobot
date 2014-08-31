@@ -1,0 +1,13 @@
+@usedefault
+
+h2. MachineResource
+
+details of a machine which provides resource as part of a provider
+
+
+
+
+
+
+
+

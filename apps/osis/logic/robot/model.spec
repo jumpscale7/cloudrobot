@@ -73,8 +73,13 @@
 [rootmodel:provider] @index
     prop:name str,,
     prop:type str,,amazon;digitalocean;google;dedicated
+    prop:location str,,free text to describe location
+    prop:acl list(ace),,
     prop:descr str,,
     prop:acl list(ace),,
+    prop:login str,,
+    prop:secret str,,
+    prop:params str,,json encode other set of parameters relevant to this provider
 
 [rootmodel:resourcemachine] @index
     """
