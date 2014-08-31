@@ -1,0 +1,16 @@
+@usedefault
+
+h2. session
+
+detail of 1 session
+
+this info comes out of redis production (NOT OSIS)
+
+make as wiki macro !!!
+
+link to jobs which are active in session
+(not older than 1 h)
+
+
+
+

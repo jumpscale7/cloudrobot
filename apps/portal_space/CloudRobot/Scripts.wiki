@@ -1,0 +1,11 @@
+@usedefault
+
+h2. scripts
+
+show dynamic table of scripts
+
+optionally as get statement the secret
+
+use the actor to get the info (not directly osis). this one already uses the secret
+
+

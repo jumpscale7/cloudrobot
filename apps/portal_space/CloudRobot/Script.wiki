@@ -1,0 +1,13 @@
+@usedefault
+
+h2. script
+
+detail of script
+show secrets
+use codeblock
+
+show when executed (grid of jobs which executed this script)
+
+
+
+

@@ -1,0 +1,5 @@
+@usedefault
+
+h2. jobs
+
+show dynamic table of jobs
