@@ -27,19 +27,36 @@
     prop:secrets list(str),,
 
 [rootmodel:job] @index
-    prop:uid str,,
+    prop:guid str,,
     prop:rscript_channel str,,
     prop:rscript_name str,,
     prop:rscript_content str,,
-    prop:globals str,,
-    prop:session str,,
+    prop:vars str,,
+    prop:sessionid str,,
     prop:onetime bool,,if just an adhoc script executed once
-    prop:user str,,
+    prop:userid str,,
+    prop:state str,, (ERROR,OK,RUNNING,PENDING)
+    prop:start int,,epoch of start
+    prop:end int,,epoch when end of job
+    prop:actions list(str),,actionguids
+    prop:error str,,
+    prop:out str,,
+
+[rootmodel:action] @index
+    prop:guid str,,
+    prop:jobguid str,,
+    prop:rscript_channel str,,
+    prop:rscript_name str,,    
+    prop:userid str,,
+    prop:name str,,
+    prop:code str,,
+    prop:vars str,,
     prop:result str,,
     prop:log str,,
     prop:state str,, (ERROR,OK,RUNNING,PENDING)
     prop:start int,,epoch of start
     prop:end int,,epoch when end of job
+    prop:error str,,
 
 [rootmodel:secrets] @index
     prop:user str,,

@@ -2,12 +2,15 @@ from JumpScale import j
 import JumpScale.lib.txtrobot
 import ujson as json
 import JumpScale.lib.cloudrobots
+import time
 
 robotdefinition="""
 
 user (u,users)
 - list (l)
 -- company #optional
+
+- error
 
 - new (n)
 -- firstname
@@ -54,9 +57,10 @@ class UserCmds():
         return 'User created successfully.'
 
 
+    def user__error(self):
+        raise RuntimeError("just an error")
 
-
-    def user__list(self,**args):        
+    def user__list(self,**args):       
         out=""
         for i in range(10):
             out+=self.user__get()

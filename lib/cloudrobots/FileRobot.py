@@ -5,8 +5,6 @@ import time
 class FileRobot():
     def __init__(self):
         self.basepath="%s/cloudrobot"%j.dirs.varDir
-        self.robots = {}
-
 
     def findGlobal(self,C,name):
         for line in C.split("\n"):
@@ -18,8 +16,8 @@ class FileRobot():
         return None
 
     def start(self):
-
-        for channel in self.robots.keys():
+        
+        for channel in j.servers.cloudrobot.robots.keys():
             for item in ["in","out","err","draft"]:  #,"jobs"
                 j.system.fs.createDir("%s/%s/%s"%(self.basepath,channel,item))
 
@@ -29,8 +27,7 @@ class FileRobot():
             # channels=j.system.fs.listDirsInDir("data",False,True)
 
             #is to get access to the other robots from a robot
-            for channel in self.robots.keys():
-                self.robots[channel].robots=self.robots
+            for channel in j.servers.cloudrobot.robots.keys():
                 # for channel in channels:                
                 for path in j.system.fs.listFilesInDir("%s/%s/in/"%(self.basepath,channel)):
                     name0=j.system.fs.getBaseName(path).replace(".txt","").replace(".py","")
@@ -52,39 +49,24 @@ class FileRobot():
                     session.userid=userid
                     session.save()                    
 
-                    job=j.servers.cloudrobot.jobNew(channel, msg=C, rscriptname=name0, args={}, userid=userid, sessionid=session.name)
+                    job=session.jobNew(channel, msg=C, rscriptname=name0, args={})
 
-                    from IPython import embed
-                    print "DEBUG NOW ooo"
-                    embed()
-                    
+                    job.executeAsync()
 
-                    result=self.robots[channel].process(C)
+                    #make sure when you try to get there is enough time to execute
+                    job.waitExecutionDone()
+
+                    job=session.jobGet(job.model.guid)
 
                     j.system.fs.remove(path)
-
-                    if jobguid<>None:
-                        job.result = result
-                        job.end = j.base.time.getTimeEpoch()
                     
-                    if result.find(">ERROR:")<>-1:
+                    if job.model.state<>"OK":
                         print "ERROR, see %s"%path
-                        if jobguid<>None:
-                            job.state = "ERROR"
                         path="%s/%s/err/%s"%(self.basepath,channel,name)
-                        j.system.fs.writeFile(path,result)
+                        j.system.fs.writeFile(path,job.model.out)
                     else:
-                        if jobguid<>None:
-                            job.state = "OK"
                         path="%s/%s/out/%s"%(self.basepath,channel,name)
-                        j.system.fs.writeFile(path,result)
-
-                    # if userid<>"":
-                    #     j.servers.cloudrobot.sendUserMessage(userid,result)                         
-
-                    if jobguid<>None:
-                        tmp, tmp, guid = cl.set(job)
-                        j.servers.cloudrobot.job2redis(job)
+                        j.system.fs.writeFile(path,job.model.out)
 
             time.sleep(0.5)
 
