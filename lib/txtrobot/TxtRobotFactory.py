@@ -33,11 +33,11 @@ class TxtRobot():
         self.entityAlias={}
         self.entities=[]
         self.cmds={}
+        self.cmdobj=None
         self._initCmds(definition)
         self.cmdsToImpl={}
         self.help=TxtRobotHelp()
         # self.snippet = TxtRobotSnippet()
-        self.cmdobj=None
         self.redis=j.clients.redis.getRedisClient("localhost",7768)
         self.codeblocks={}
         alias={}
@@ -105,7 +105,7 @@ class TxtRobot():
                         alias=alias.lower().strip()
                         self.cmdAlias[ent][alias]=cmd                
 
-    def _processGlobalArg(self,args,line):
+    def _processGlobalArg(self,obj,line):
         # print "GARG:%s"%line
         res={}
         out=""
@@ -122,22 +122,12 @@ class TxtRobot():
             if val.find("#")<>-1:
                 val=val.split("#",1)[0].strip()        
 
-            if val.find("$")<>-1:
-                for toreplace,replace in j.cloudrobot.vars.iteritems():
-                    val=val.replace("$%s"%toreplace,str(replace))
-                for toreplace,replace in args.iteritems():
-                    val=val.replace("$%s"%toreplace,str(replace))
-                        
-            args[name]=val
-        return args
-
-    def args2session(self,args):        
-        if self.args.has_key("msg_userid"):
-            j.servers.cloudrobot.setUserGlobals(self.args["msg_userid"],args)
+            obj.vars[name]=val
+        return obj
         
-    def message2session(self,result):
-        if self.args.has_key("msg_userid"):
-            j.servers.cloudrobot.sendUserMessage(self.args["msg_userid"],result)
+    # def message2session(self,result):
+    #     if self.args.has_key("msg_userid"):
+    #         j.servers.cloudrobot.sendUserMessage(self.args["msg_userid"],result)
 
     def _longTextTo1Line(self,txt):
         txt=txt.rstrip("\n")
@@ -205,32 +195,32 @@ class TxtRobot():
             out+="%s\n"%line
         return out
 
-    def response(self,cblock,result):
-        if cblock.strip()<>"":
-            out=j.tools.text.prefix("< ",cblock)
-        else:
-            out=""
-        if out=="":
-            return ""
-        if out[-1]<>"\n":
-            out+="\n"
-        if result<>"":
-            out+=j.tools.text.prefix("> ",result)
-        if out[-1]<>"\n":
-            out+="\n"
-        return out
+    # def response(self,cblock,result):
+    #     if cblock.strip()<>"":
+    #         out=j.tools.text.prefix("< ",cblock)
+    #     else:
+    #         out=""
+    #     if out=="":
+    #         return ""
+    #     if out[-1]<>"\n":
+    #         out+="\n"
+    #     if result<>"":
+    #         out+=j.tools.text.prefix("> ",result)
+    #     if out[-1]<>"\n":
+    #         out+="\n"
+    #     return out
 
-    def responseError(self,cblock,result):
-        out=cblock            
-        if out.strip()<>"" and out[-1]<>"\n":
-            out+="\n"        
-        if result<>"":
-            out+=j.tools.text.prefix(">ERROR: ",result)
-        if out.strip()<>"" and out[-1]<>"\n":
-            out+="\n" 
-        self.message2session("ERROR:%s\n"%out)
-        print out
-        return out
+    # def responseError(self,cblock,result):
+    #     out=cblock            
+    #     if out.strip()<>"" and out[-1]<>"\n":
+    #         out+="\n"        
+    #     if result<>"":
+    #         out+=j.tools.text.prefix(">ERROR: ",result)
+    #     if out.strip()<>"" and out[-1]<>"\n":
+    #         out+="\n" 
+    #     self.message2session("ERROR:%s\n"%out)
+    #     print out
+    #     return out
 
     def _processSnippets(self,txt):
         out=""
@@ -258,9 +248,10 @@ class TxtRobot():
         self.redis.hset("robot:snippets", md5, snippet)
         return "snippetkey=%s"%md5
 
-    def process(self, txt):
+    def process(self, txt,userid,sessionid,jobguid):
                 
-        j.cloudrobot.vars={}
+        session=j.servers.cloudrobot.sessionGet(userid,sessionid)
+        job=session.jobGet(jobguid)
 
         txt=self._findCodeBlocks(txt)        
         txt=self._longTextTo1Line(txt)
@@ -274,9 +265,6 @@ class TxtRobot():
 
         txt=txt.rstrip("\n")
         splitted=txt.split("\n")
-
-        gargs={}
-        self.args=gargs
 
         cmdfound=False
 
@@ -315,7 +303,7 @@ class TxtRobot():
                 res2,rc=self.processCmd(cmdblock,entity, cmd, args,gargs)
                 out+=res2
                 
-                if rc>0 and self.cmdobj.alwaysdie:
+                if rc>0 and session.alwaysdie:
                     break
 
                 cmdblock=""
@@ -330,12 +318,19 @@ class TxtRobot():
                 out+=self.response(line,self._snippetCreate(remainder.strip()))
                 continue
 
-            if line.find("@")==0 or (cmd=="" and line.find("=")<>-1):
-                #global args                
-                gargs=self._processGlobalArg(gargs,line)
+            if line.find("@")==0:                
+                #session args                
+                session=self._processGlobalArg(session,line)
                 out+="%s\n"%line
                 continue
 
+            if cmd=="" and line.find("=")<>-1:
+                #job args                
+                job=self._processGlobalArg(job,line)
+                out+="%s\n"%line
+                continue
+
+            #process cmd
             if line[0]=="!":
                 #CMD
                 entity=""
@@ -345,8 +340,8 @@ class TxtRobot():
                 line2=line2.strip()
                 if line2.find(".")==-1:
                     # raise RuntimeError("format needs to be !entity.cmd (here:%s)"%line2)
-                    out+=self.responseError(line2,"format needs to be !entity.cmd")
-                    if self.cmdobj.alwaysdie:
+                    out+=job.raiseError("format needs to be !entity.cmd on line:%s"%line2)                    
+                    if session.alwaysdie:
                         break
                 entity,cmd=line2.split(".",1)
                 entity=entity.lower().strip()
@@ -362,8 +357,8 @@ class TxtRobot():
 
                     if not entity in self.entities:
                         # out+= '%s\n' % self.error(,help=True)
-                        out+=self.responseError(line,"Could not find entity:'%s'"%(entity))
-                        if self.cmdobj.alwaysdie:
+                        out+=job.raiseError("Could not find entity:'%s' on line:%s"%(entity,line2))
+                        if session.alwaysdie:
                             break
                         continue
 
@@ -371,8 +366,8 @@ class TxtRobot():
                         cmd=self.cmdAlias[entity][cmd]
 
                     if not cmd in self.cmds[entity]:
-                        out+= self.responseError(line,"Could not understand command '%s'."%(cmd))
-                        if self.cmdobj.alwaysdie:
+                        out+=job.raiseError("Could not understand command '%s' line:%s"%(cmd,line2))
+                        if session.alwaysdie:
                             break                    
                         continue
 
@@ -383,6 +378,7 @@ class TxtRobot():
             if cmd<>"":
                 cmdblock+="%s\n"%line
 
+            #process argument for cmd 
             if line.find("=")<>-1 and cmd<>"":
                 name,data=line.split("=",1)
                 name=name.lower()
@@ -391,58 +387,50 @@ class TxtRobot():
 
         if cmd<>"" and rc==0:
             #end of cmd block
-            cmdfound=True      
-            self.args2session(gargs)            
-            res2,rc=self.processCmd(cmdblock,entity, cmd, args,gargs)            
-            out+=res2
+            cmdfound=True
+            action=self.processCmd(cmdblock,entity, cmd, args,session,job)            
+            out+=action.model.result
 
         out=out.strip()+"\n"
 
-        for cbname,cblock in self.codeblocks.iteritems():            
-            out="@START %s\n%s\n@END\n\n%s"%(cbname,cblock,out)
+        # for cbname,cblock in self.codeblocks.iteritems():            
+        #     out="@START %s\n%s\n@END\n\n%s"%(cbname,cblock,out)
 
-        out=out.strip()
+        # out=out.strip()
 
         while out.find("\n\n\n")<>-1:
             out=out.replace("\n\n\n","\n\n")
 
-        if cmdfound==False: 
-            self.args2session(gargs)
+        job.model.state="OK"
+        job.model.end=j.base.time.getTimeEpoch()
+        job.model.out=out
+        job.save()        
+        
+        # if cmdfound==False: 
+        #     self.args2session(gargs)
         #     out+= self.responseError("\n","Did not find a command to execute.")
 
-        if gargs.has_key("mail_from"):
-            ffrom=gargs["mail_from"]
-            subject=gargs["mail_subject"]
-            mail_robot=gargs["mail_robot"]
-            out2=""
-            for line in out.split("\n"):
-                if line.find("@mail_")==0:
-                    continue
-                out2+="%s\n"%line            
-            j.clients.email.send([ffrom], mail_robot, subject, out2)
+        # if gargs.has_key("mail_from"):
+        #     ffrom=gargs["mail_from"]
+        #     subject=gargs["mail_subject"]
+        #     mail_robot=gargs["mail_robot"]
+        #     out2=""
+        #     for line in out.split("\n"):
+        #         if line.find("@mail_")==0:
+        #             continue
+        #         out2+="%s\n"%line            
+        #     j.clients.email.send([ffrom], mail_robot, subject, out2)
 
         return out
 
-
-    def processCmd(self, cmdblock,entity, cmd, args,gargs):
+    def processCmd(self, cmdblock,entity, cmd, args,session,job):
         print "EXECUTE:\n%s"%cmdblock
-        self.message2session("CMD:%s"%cmd)
 
-        args=copy.copy(args)
-        for key,val in gargs.iteritems():
-            if not args.has_key(key):
-                args[key]=val
+        action=job.actionNew(name=cmd, code=cmdblock, vars=args)
         
-        for key,val in args.iteritems():
-            if val.find("#")<>-1:
-                val=val.split("#",1)[0].strip()
-            if val.find("$")<>-1:
-                for toreplace,replace in j.cloudrobot.vars.iteritems():
-                    val=val.replace("$%s"%toreplace,str(replace))
-                for toreplace,replace in args.iteritems():
-                    val=val.replace("$%s"%toreplace,str(replace))                    
-                    
-                args[key]=val
+        args=action._processVars(session,job)
+                        
+        session.sendUserMessage("CMD:%s"%cmd)
 
         result=None
 
@@ -460,47 +448,54 @@ class TxtRobot():
                     try:
                         method=eval("self.cmdobj.%s"%key)
                     except Exception,e:
-                        return self.responseError(cmdblock,"Cannot execute: '%s':'%s' , could not eval code."%(entity,cmd)),1
+                        action.raiseError("could not eval code.")
+                        return action
                     #now execute the code
                     try:
                         result=method(**args)
                     except Exception,e:
-                        if str(e).find("E:")==0:
+                        if str(e).find("E:")==0 or str(e).find("F:")==0:
                             # j.errorconditionhandler.processPythonExceptionObject(e)
                             e=str(e)[2:]
-                            print e
-                            return self.responseError(cmdblock,"Cannot execute: '%s':'%s'\n%s"%(entity,cmd,e)),1
-                        elif str(e).find("F:")==0:
-                            # j.errorconditionhandler.processPythonExceptionObject(e)
-                            e=str(e)[2:]
-                            print e       
-
-                            return self.responseError(e,"Cannot execute: '%s':'%s'\n"%(entity,cmd))
+                            # print e
+                            action.raiseError("execution error")
+                            return action                            
                         else:
                             j.errorconditionhandler.processPythonExceptionObject(e)
-                        return self.responseError(cmdblock,"Cannot execute: '%s':'%s' , could not execute code, error."%(entity,cmd)),1
+                            action.raiseError("bug:%s"%e)
+                            return action
+                else:
+                    action.raiseError("bug:did not attr:'%s' on self.cmdobj"%key)
+                    return action        
+            else:
+                action.raiseError("bug:did not find self.cmdobj")
+                return action
+
 
         if result==None:
-            msg="Cannot execute: !%s.%s , entity:method not found."%(entity,cmd)
-            return self.responseError(cmdblock,msg),1
+            action.raiseError("method not found on robot.")
+            return action            
 
         if not j.basetype.string.check(result):
-            result=yaml.dump(result, default_flow_style=False).replace("!!python/unicode ","")
+            resultstr=yaml.dump(result, default_flow_style=False).replace("!!python/unicode ","")
+            action.model.result=json.dumps(result)
+        else:
+            resultstr=result
+            action.model.result=result
 
-        out=self.response(cmdblock,result)
+        action.state="OK"
+        action.save()
 
-        if out.find("$")<>-1:
-            for toreplace,replace in j.cloudrobot.vars.iteritems():
-                out=out.replace("$%s"%toreplace,str(replace))
-            for toreplace,replace in gargs.iteritems():
-                out=out.replace("$%s"%toreplace,str(replace))  
-            for toreplace,replace in args.iteritems():
-                out=out.replace("$%s"%toreplace,str(replace))  
+        # if out.find("$")<>-1:
+        #     for toreplace,replace in j.cloudrobot.vars.iteritems():
+        #         out=out.replace("$%s"%toreplace,str(replace))
+        #     for toreplace,replace in gargs.iteritems():
+        #         out=out.replace("$%s"%toreplace,str(replace))  
+        #     for toreplace,replace in args.iteritems():
+        #         out=out.replace("$%s"%toreplace,str(replace))  
 
-        self.message2session("result:\n%s"%result)
-
-        print out
-        return out,0
+        session.sendUserMessage("result:\n%s"%resultstr)
+        return action
 
     def processRobotCmd(self,cmdblock,cmd, args):
         
@@ -553,8 +548,7 @@ class TxtRobot():
         else:
             return "E:could not find cmd:%s"%(cmd)
         return out
-
-        
+     
     def addCmdClassObj(self,cmdo):
         cmdo.txtrobot=self
         self.cmdobj=cmdo

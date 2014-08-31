@@ -4,6 +4,7 @@ import ujson as json
 import JumpScale.lib.cloudrobots
 import JumpScale.baselib.mailclient
 
+
 robotdefinition="""
 
 user (u,users)
@@ -326,7 +327,6 @@ id.key.dsa.pub=
             hrd=result[key]
             result2[key.lower()]=[item.lower() for item in hrd.get("id.alias").split(",") if item.strip()<>""]
         return result2
-
 
     def user__list(self,**args):
         
