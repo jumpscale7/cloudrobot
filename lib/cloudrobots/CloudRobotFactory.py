@@ -40,6 +40,7 @@ class Session():
         job.vars=args
         job.save()        
         job.session=self
+        self.jobs.append(job.model.guid)
         return job
 
     def jobGet(self,guid):

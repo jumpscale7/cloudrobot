@@ -72,7 +72,7 @@
 
 [rootmodel:provider] @index
     prop:name str,,
-    prop:type str,,amazon;digitalocean;google;dedicated
+    prop:type str,,amazon;digitalocean;google;dedicated;ms1
     prop:location str,,free text to describe location
     prop:acl list(ace),,
     prop:descr str,,
