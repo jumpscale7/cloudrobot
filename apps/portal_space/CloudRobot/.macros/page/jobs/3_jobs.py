@@ -7,14 +7,14 @@ def main(j, args, params, tags, tasklet):
     filters = dict()
     for tag, val in args.tags.tags.iteritems():
         val = args.getTag(tag)
-        if j.basetype.integer.checkString(val):
+        if val and j.basetype.integer.checkString(val):
             val = int(val)
         filters[tag] = val
 
-    fieldnames = ['ID', 'Name', 'Channel', 'Type', 'Description']
-    fieldvalues = ['[%(id)s|/cloudrobot/script?id=%(id)s]', 'name', 'channel', 'type', 'descr']
-    fieldids = ['id', 'name', 'channel', 'type', 'descr']
-    tableid = modifier.addTableForModel('robot', 'rscript', fieldids, fieldnames, fieldvalues, filters=filters)
+    fieldnames = ['ID', 'User', 'RScript Name', 'RScript Channel', 'State']
+    fieldvalues = ['[%(id)s|/cloudrobot/job?id=%(id)s]', 'user', 'rscript_name', 'rscript_channel', 'state']
+    fieldids = ['id', 'user', 'rscript_name', 'rscript_channel', 'state']
+    tableid = modifier.addTableForModel('robot', 'job', fieldids, fieldnames, fieldvalues, filters=filters)
     modifier.addSearchOptions('#%s' % tableid)
 
     params.result = page

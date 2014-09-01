@@ -1,5 +1,5 @@
 @usedefault
-{{session userid:$$userid name:$$name}}
+{{session}}
 
 h2. Session
 
@@ -18,3 +18,9 @@ h3. Jobs
 {% for job in jobs -%}
 |[${job} | /cloudrobot/job?id=${job}]|
 {% endfor %}
+
+
+
+
+
+

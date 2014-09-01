@@ -1,9 +1,23 @@
 @usedefault
+{{job id:$$id}}
 
-h2. job
+h2. Job
 
-detail of 1 job
-use code blocks where relevant
+h3. Details
+|*ID*|$$id|
+|*User*|${user}|
+|*Start*|${start}|
+|*End*|${end}|
+|*State*|${state}|
+|*RScript Name*|${rscript_name}|
+|*RScript Channel*|${rscript_channel}|
+|*RScript Content*|${rscript_content}|
+|*Last Modified*|${lastmod}|
+|*Grid ID*|${gid}|
+|*Log*|${log}|
+|*One Time*|${onetime}|
+|*Result*|${result}|
+
 
 
 

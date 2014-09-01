@@ -1,12 +1,13 @@
 @usedefault
 
-h2. provider
+h2. Provider
 
-detail of 1 provider
-eg amazon
-
-
-
-
-
-
+h3. Details
+|*ID*|$$id|
+|*Name*|${name}|
+|*Type*|${type}|
+|*Location*|${location}|
+|*Description*|${descr}|
+|*Login*|${login}|
+|*Secret*|${secret}|
+|*Params*|${params}|

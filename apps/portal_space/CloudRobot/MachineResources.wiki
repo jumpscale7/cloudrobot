@@ -2,9 +2,7 @@
 
 h2. MachineResources
 
-show dynamic table of MachineResources
-
-use a get param to show for 1 specific user
+{{MachineResources}}
 
 
 

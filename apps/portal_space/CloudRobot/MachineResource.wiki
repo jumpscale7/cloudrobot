@@ -1,13 +1,27 @@
 @usedefault
+{{machineresource id:$$id}}
 
-h2. MachineResource
+h2. Machine Resource
 
-details of a machine which provides resource as part of a provider
-
-
-
-
-
-
-
-
+h3. Details
+|*ID*|$$id|
+|*Name*|${name}|
+|*Description*|${descr}|
+|*Provider*|${provider}|
+|*Location*|${location}|
+|*IPv4*|${ipv4}|
+|*IPv6*|${ipv6}|
+|*Root Password*|${rootpasswd}|
+|*CPU Cores*|${cpucores}|
+|*CPU MHZ*|${cpumhz}|
+|*SSD Size*|${ssd_size}|
+|*Disk Size*|${disk_size}|
+|*Memory Size*|${mem_size}|
+|*Cost*|${cost}|
+|*SSD Used*|${ssd_used}|
+|*Disk Used*|${disk_used}|
+|*Memory Used*|${mem_used}|
+|*CPU Used*|${cpu_used}|
+|*SSD Cost Distribution*|${cost_distr_ssd}|
+|*Disk Cost Distribution*|${cost_distr_disk}|
+|*Compute Cost Distribution*|${cost_distr_compute}|

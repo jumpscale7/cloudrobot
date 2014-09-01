@@ -1,7 +1,7 @@
 @usedefault
 
-h2. providers
+h2. Providers
 
-show dynamic table of providers
+{{Providers}}
 
 

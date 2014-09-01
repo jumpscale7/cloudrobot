@@ -1,5 +1,5 @@
 @usedefault
 
-h2. jobs
+h2. Jobs
 
-show dynamic table of jobs
+{{Jobs}}
