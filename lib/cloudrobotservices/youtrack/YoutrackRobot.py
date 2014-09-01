@@ -609,9 +609,9 @@ class YouTrackRobotCmds():
                 msg="Issue created with id:'%s'"%idd
 
             if args.has_key("parent"):     
-                from IPython import embed
-                print "DEBUG NOW parent"
-                embed()
+                # from IPython import embed
+                # print "DEBUG NOW parent"
+                # embed()
                           
                 args2=copy.copy(args)
                 if args2.has_key("id"):
