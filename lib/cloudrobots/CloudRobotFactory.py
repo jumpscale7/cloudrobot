@@ -23,12 +23,13 @@ class Session():
             self.moddate=j.base.time.getTimeEpoch()
             self.retchannels=["xmpp"]
             self.loglevel=5
-            self.channel="ms1_iaas"
+            self.channel=""
             self.jobs=[]
             self.userXmpp=[]
             self.outpath=""
             self.vars={}
         self.alwaysdie=True
+        self.reservedCmds=["print","loglevel","vars","channel","help"]
 
     def jobNew(self,channel,msg,rscriptname,args={}):
         job=Job()        
@@ -54,7 +55,14 @@ class Session():
         j.servers.cloudrobot.redis.hset("cloudrobot:sessions:%s"%(self.userid),self.name,json.dumps(self.__dict__))
 
 
-    def sendUserMessage(self,msg,html=False):                
+    def sendUserMessage(self,msg,html=False):     
+        if msg.strip()=="":
+            return
+        msg=msg.strip()
+        msg+="\n"
+        msg=msg.replace("\n\n\n","\n\n")
+        msg=msg.replace("\n\n\n","\n\n")
+
         if "xmpp" in self.retchannels:
             if self.userXmpp==[]:
                 user=j.servers.cloudrobot.userGet(self.userid)
@@ -66,11 +74,88 @@ class Session():
                 else:
                     j.servers.cloudrobot.redisq_xmpp.put("1:%s:%s"%(xmpp,str(msg)))
         elif "file" in self.retchannels:
-            if msg.strip()=="":
-                return
-            if msg[-1]<>"\n":
-                msg+="\n"
             j.system.fs.writeFile(self.outpath, msg, append=True)
+
+    def process(self,msg,channel=None,scriptname="unknown",args={}):
+        if msg.find("session")==0:
+            self.sendUserMessage("your current session:%s\n"%self.name)
+            return
+        
+        if msg.find("channel")==0:
+            channel=msg.replace("channel","").strip().lower().strip(":=").strip()
+            if channel<>"":
+                self.channel=channel
+                self.save()
+            self.sendUserMessage("your current channel:%s\n"%self.channel)
+            return
+
+        #FIND ROBOT CMDS
+        if msg.strip() in self.reservedCmds:                
+            self._processRobotCmd(msg,"")
+
+        if msg.find(" ")<>-1 and msg[0]<>"!" and msg[0]<>"#":
+            cmd=line.split(" ")[0].lower()
+            if cmd in self.reservedCmds:
+                arg=line.split(" ",1)[1]
+                self.processRobotCmd(cmd,arg)
+
+        foundcmd=False
+        foundvars=False
+        #now find vars
+        for line in msg.split("\n"):
+            line=line.strip()
+            if line=="" or line[0]=="#":
+                continue
+            if line.find("!")==0:
+                foundcmd=True
+                break
+            if line.find("=")<>-1:
+                name,val=line.split("=",1)
+                name=name.strip()
+                val=val.strip()
+                self.vars[name]=val
+                foundvars=True
+
+        if foundvars:
+            self.save()
+
+        if foundcmd:
+            if channel==None:
+                channel=self.channel
+
+            if channel=="":
+                self.sendUserMessage("Error:channel not defined, please use channel cmd.")
+                return
+
+            job=self.jobNew(channel, msg=msg, rscriptname=scriptname, args=args)
+            job.executeAsync()
+
+
+    def _processRobotCmd(self,cmd,arg):
+        print "ROBOTCMD:%s %s"%(cmd,arg)
+        if cmd=="print":
+            self.sendUserMessage(arg)
+            return
+        elif cmd=="vars":
+            out=""
+            if self.vars<>{}:
+                out+="Session Vars:\n"
+                out+="%s\n\n"%j.db.serializers.hrd.dumps(self.vars)
+            self.sendUserMessage(out)
+
+        elif cmd=="channel":
+            if arg=="":
+                robots="\n".join(j.servers.cloudrobot.robots.keys())
+                self.sendUserMessage("Available robot channels:\n%s"%robots)
+            else:
+                self.channel=arg.strip().lower()
+                self.save()
+                self.sendUserMessage("Channel is now:%s"%self.channel)
+                
+        elif cmd=="loglevel":
+            self.loglevel=int(arg)
+            self.save()
+            self.sendUserMessage("Loglevel is now:%s"%self.loglevel)           
 
     def __repr__(self):
         return str(self.__dict__)
@@ -350,8 +435,12 @@ class CloudRobotFactory(object):
             userid=self.redis.hset("cloudrobot:users:xmpp",xmpp,userid)
         return userid
             
-    def sessionGet(self,userid,name,reset=False):
+    def sessionGet(self,userid,name=None,reset=False):
         # print "redis:'cloudrobot:sessions:%s' name:%s"%(userid,name)
+        if name==None:
+            #look at default session or see if there is one
+            name=self.getUserSession(userid,reset=reset)
+
         if reset or not self.redis.hexists("cloudrobot:sessions:%s"%(userid),name):
             session=Session()
             session.userid=userid
@@ -372,4 +461,16 @@ class CloudRobotFactory(object):
         # self.redis.hset("cloudrobot:users:obj",userid,json.dumps(user.__dict__))
         # obj=json.loads(self.redis.hget("cloudrobot:users:obj",userid))
         return user
+
+    def setUserSession(self,userid,name):
+        self.redis.hset("cloudrobot:currentsessions",userid,name.lower().strip())
+
+    def getUserSession(self,userid,reset=False):
+        if reset or not self.redis.hexists("cloudrobot:currentsessions",userid):
+            self.redis.hset("cloudrobot:currentsessions",userid,"default")        
+        return self.redis.hget("cloudrobot:currentsessions",userid)
+
+    def reset(self,userid):
+        self.redis.hdel("cloudrobot:currentsessions",userid)
+        #@todo remove sessions for the user
 
