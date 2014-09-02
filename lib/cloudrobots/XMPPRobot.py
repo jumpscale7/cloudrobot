@@ -118,10 +118,17 @@ class XMPPRobot(sleekxmpp.ClientXMPP):
         
         try:
             userid=j.servers.cloudrobot.getUserIdFromXmpp(ffrom)
-            gglobals=j.servers.cloudrobot.getUserGlobals(userid)
+
+            # gglobals=j.servers.cloudrobot.getUserGlobals(userid)
         except Exception,e:
-            self.redisq.put("1:%s:%s"%(ffrom,str(e)))
+            self.redisq.put("1:%s:Error:%s"%(ffrom,str(e)))
             return
+
+        session=j.servers.cloudrobot.sessionGet(userid)
+        from IPython import embed
+        print "DEBUG NOW uuuiuiuiui"
+        embed()
+        
 
         if msg['type'] in ('chat', 'normal'):
             body=msg["body"]
