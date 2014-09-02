@@ -1,8 +1,22 @@
 @usedefault
+{{Action id:$$id}}
 
-h2. action
+h2. Action
 
-detail of 1 action
-use code blocks where relevant
-
-
+h3. Details
+|*ID*|$$id|
+|*User ID*|${userid}|
+|*Name*|${name}|
+|*Start*|${start}|
+|*End*|${end}|
+|*State*|${state}|
+|*RScript Name*|${rscript_name}|
+|*RScript Channel*|${rscript_channel}|
+|*Last Modified*|${lastmod}|
+|*Grid ID*|${gid}|
+|*Log*|${log}|
+|*One Time*|${onetime}|
+|*Result*|${Result}|
+|*Error*|${error}|
+|*Vars*|${vars}|
+|*Code*|${code}|

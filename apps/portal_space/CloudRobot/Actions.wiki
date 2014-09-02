@@ -2,8 +2,6 @@
 
 h2. actions
 
-show dynamic table of actions
-
-use a get param to show for 1 specific job or all
+{{Actions}}
 
 

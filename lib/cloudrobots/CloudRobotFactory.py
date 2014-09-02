@@ -285,7 +285,7 @@ class CloudRobotFactory(object):
         self.hrd=None
         # self.robotspath=None
         self._inited=False
-        
+
     def init(self): 
         if not self._inited:
             self._init()

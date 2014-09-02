@@ -2,8 +2,6 @@
 
 h2. scripts
 
-{{rscripts}}
-
 show dynamic table of scripts
 
 optionally as get statement the secret

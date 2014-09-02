@@ -11,10 +11,10 @@ def main(j, args, params, tags, tasklet):
             val = int(val)
         filters[tag] = val
 
-    fieldnames = ['ID', 'Name', 'Channel', 'Type', 'Description']
-    fieldvalues = ['[%(id)s|/cloudrobot/script?id=%(id)s]', 'name', 'channel', 'type', 'descr']
-    fieldids = ['id', 'name', 'channel', 'type', 'descr']
-    tableid = modifier.addTableForModel('robot', 'rscript', fieldids, fieldnames, fieldvalues, filters=filters)
+    fieldnames = ['ID', 'Name', 'Provider', 'Location', 'IPv4', 'IPv6']
+    fieldvalues = ['[%(id)s|/cloudrobot/machineresource?id=%(id)s]', 'name', 'provider', 'location', 'ipv4', 'ipv6']
+    fieldids = ['id',  'name', 'provider', 'location', 'ipv4', 'ipv6']
+    tableid = modifier.addTableForModel('robot', 'resourcemachine', fieldids, fieldnames, fieldvalues, filters=filters)
     modifier.addSearchOptions('#%s' % tableid)
 
     params.result = page

@@ -1,12 +1,23 @@
 @usedefault
+{{rscript id:$$id}}
 
 h2. script
 
-detail of script
-show secrets
-use codeblock
+h3. Details
+|*ID*|$$id|
+|*Name*|${name}|
+|*Channel*|${channel}|
+|*Description*|${descr}|
+|*Secrets*|${secrets}|
 
-show when executed (grid of jobs which executed this script)
+*Content*
+{{code:
+${content}
+}}
+
+h3. Jobs
+{{jobs rscript_name:${name} rscript_channel:${channel}}}
+
 
 
 
