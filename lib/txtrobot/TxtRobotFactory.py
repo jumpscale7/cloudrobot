@@ -50,6 +50,8 @@ class TxtRobot():
         self.osis = j.core.osis.getClient(user='root')
         self.osis_system_user=j.core.osis.getClientForCategory(self.osis, 'system', 'user')
 
+        
+
     def _initCmds(self,definition):
 
         for line in definition.split("\n"):
@@ -434,42 +436,34 @@ class TxtRobot():
 
         result=None
 
-        if entity=="robot":
-            result=self.processRobotCmd(cmdblock,cmd, args)
-            if str(result).find("E:")==0:
-                # j.errorconditionhandler.processPythonExceptionObject(e)
-                result=str(result)[2:]
-                print result
-                return self.responseError(cmdblock,"Cannot execute: !%s.%s\nERROR:%s"%(entity,cmd,result)),1
-        else:
-            key="%s__%s"%(entity,cmd)
-            if self.cmdobj<>None:
-                if hasattr(self.cmdobj,key):
-                    try:
-                        method=eval("self.cmdobj.%s"%key)
-                    except Exception,e:
-                        action.raiseError("could not eval code.")
+        key="%s__%s"%(entity,cmd)
+        if self.cmdobj<>None:
+            if hasattr(self.cmdobj,key):
+                try:
+                    method=eval("self.cmdobj.%s"%key)
+                except Exception,e:
+                    action.raiseError("could not eval code.")
+                    return action
+                #now execute the code
+                try:
+                    result=method(**args)
+                except Exception,e:
+                    if str(e).find("E:")==0 or str(e).find("F:")==0:
+                        # j.errorconditionhandler.processPythonExceptionObject(e)
+                        e=str(e)[2:]
+                        # print e
+                        action.raiseError("execution error")
+                        return action                            
+                    else:
+                        j.errorconditionhandler.processPythonExceptionObject(e)
+                        action.raiseError("bug:%s"%e)
                         return action
-                    #now execute the code
-                    try:
-                        result=method(**args)
-                    except Exception,e:
-                        if str(e).find("E:")==0 or str(e).find("F:")==0:
-                            # j.errorconditionhandler.processPythonExceptionObject(e)
-                            e=str(e)[2:]
-                            # print e
-                            action.raiseError("execution error")
-                            return action                            
-                        else:
-                            j.errorconditionhandler.processPythonExceptionObject(e)
-                            action.raiseError("bug:%s"%e)
-                            return action
-                else:
-                    action.raiseError("bug:did not attr:'%s' on self.cmdobj"%key)
-                    return action        
             else:
-                action.raiseError("bug:did not find self.cmdobj")
-                return action
+                action.raiseError("bug:did not attr:'%s' on self.cmdobj"%key)
+                return action        
+        else:
+            action.raiseError("bug:did not find self.cmdobj")
+            return action
 
 
         if result==None:
@@ -497,57 +491,33 @@ class TxtRobot():
         session.sendUserMessage("result:\n%s"%resultstr)
         return action
 
-    def processRobotCmd(self,cmdblock,cmd, args):
-        
-        # for key,val in args.iteritems():
-        #     if val.find("$")<>-1:
-        #         for toreplace,replace in j.cloudrobot.vars.iteritems():
-        #             val=val.replace("$%s"%toreplace,str(replace))
-        #         for toreplace,replace in args.iteritems():
-        #             val=val.replace("$%s"%toreplace,str(replace))           
-        for key in args.keys():
-            if args[key].find("#")<>-1:
-                args[key]=args[key].split("#",1)[0].strip()
+         
 
-        out=""
-        if cmd=="print":
-            if not args.has_key("msg"):
-                return "E:there should be msg argument."            
-            out=args["msg"]
-        elif cmd=="printvars":
-            for key,val in j.cloudrobot.vars.iteritems():
-                out+="$%s=%s\n"%(key,val)
-                
-        elif cmd=="verbosity":
-            j.cloudrobot.verbosity=int(args["name"])
+        # elif cmd=="mail":
+        #     if args.has_key("to"):
+        #         recipients=args["to"]
+        #     else:
+        #         raise RuntimeError("not implemented yet, goal is to send email to who started the script")
+        #         # users = self.osis_system_user.simpleSearch({'id': username})
+        #         # if len(users)>0:
+        #         #     user=users[0]["id"]
+        #         # else:
+        #         #     raise RuntimeError("Authentication error: user not found.")    
+        #     if args.has_key("from"):
+        #         ffrom=args["from"]
+        #     else:
+        #         ffrom="%s@%s"%(self.cmdobj.channel,j.servers.cloudrobot.domain)
 
-        elif cmd=="mail":
-            if args.has_key("to"):
-                recipients=args["to"]
-            else:
-                raise RuntimeError("not implemented yet, goal is to send email to who started the script")
-                # users = self.osis_system_user.simpleSearch({'id': username})
-                # if len(users)>0:
-                #     user=users[0]["id"]
-                # else:
-                #     raise RuntimeError("Authentication error: user not found.")    
-            if args.has_key("from"):
-                ffrom=args["from"]
-            else:
-                ffrom="%s@%s"%(self.cmdobj.channel,j.servers.cloudrobot.domain)
+        #     if args.has_key("subject"):
+        #         subject=args["subject"]
+        #     elif args.has_key("rscriptname"):
+        #         subject=args["rscriptname"]                
+        #     else:
+        #         subject="cloudrobot for channel:%s"%self.cmdobj.channel         
 
-            if args.has_key("subject"):
-                subject=args["subject"]
-            elif args.has_key("rscriptname"):
-                subject=args["rscriptname"]                
-            else:
-                subject="cloudrobot for channel:%s"%self.cmdobj.channel         
-
-            j.clients.email.send(recipients=recipients, sender=ffrom, subject=subject, message=args['msg'], files=None)
+        #     j.clients.email.send(recipients=recipients, sender=ffrom, subject=subject, message=args['msg'], files=None)
             
-        else:
-            return "E:could not find cmd:%s"%(cmd)
-        return out
+
      
     def addCmdClassObj(self,cmdo):
         cmdo.txtrobot=self
