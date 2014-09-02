@@ -6,9 +6,19 @@ class robot_provider_osismodelbase(j.code.classGetJSRootModelBase()):
     
         self._P_type=""
     
+        self._P_location=""
+    
+        self._P_acl=list()
+    
         self._P_descr=""
     
         self._P_acl=list()
+    
+        self._P_login=""
+    
+        self._P_secret=""
+    
+        self._P_params=""
     
         self._P_id=0
     
@@ -62,6 +72,46 @@ class robot_provider_osismodelbase(j.code.classGetJSRootModelBase()):
 
 
     @property
+    def location(self):
+        return self._P_location
+    @location.setter
+    def location(self, value):
+        
+        if not isinstance(value, str) and value is not None:
+            if isinstance(value, basestring) and j.basetype.string.checkString(value):
+                value = j.basetype.string.fromString(value)
+            else:
+                msg="property location input error, needs to be str, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: provider, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_location=value
+    @location.deleter
+    def location(self):
+        del self._P_location
+
+
+    @property
+    def acl(self):
+        return self._P_acl
+    @acl.setter
+    def acl(self, value):
+        
+        if not isinstance(value, list) and value is not None:
+            if isinstance(value, basestring) and j.basetype.list.checkString(value):
+                value = j.basetype.list.fromString(value)
+            else:
+                msg="property acl input error, needs to be list, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: provider, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_acl=value
+    @acl.deleter
+    def acl(self):
+        del self._P_acl
+
+
+    @property
     def descr(self):
         return self._P_descr
     @descr.setter
@@ -99,6 +149,66 @@ class robot_provider_osismodelbase(j.code.classGetJSRootModelBase()):
     @acl.deleter
     def acl(self):
         del self._P_acl
+
+
+    @property
+    def login(self):
+        return self._P_login
+    @login.setter
+    def login(self, value):
+        
+        if not isinstance(value, str) and value is not None:
+            if isinstance(value, basestring) and j.basetype.string.checkString(value):
+                value = j.basetype.string.fromString(value)
+            else:
+                msg="property login input error, needs to be str, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: provider, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_login=value
+    @login.deleter
+    def login(self):
+        del self._P_login
+
+
+    @property
+    def secret(self):
+        return self._P_secret
+    @secret.setter
+    def secret(self, value):
+        
+        if not isinstance(value, str) and value is not None:
+            if isinstance(value, basestring) and j.basetype.string.checkString(value):
+                value = j.basetype.string.fromString(value)
+            else:
+                msg="property secret input error, needs to be str, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: provider, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_secret=value
+    @secret.deleter
+    def secret(self):
+        del self._P_secret
+
+
+    @property
+    def params(self):
+        return self._P_params
+    @params.setter
+    def params(self, value):
+        
+        if not isinstance(value, str) and value is not None:
+            if isinstance(value, basestring) and j.basetype.string.checkString(value):
+                value = j.basetype.string.fromString(value)
+            else:
+                msg="property params input error, needs to be str, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: provider, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_params=value
+    @params.deleter
+    def params(self):
+        del self._P_params
 
 
     @property
@@ -160,6 +270,20 @@ class robot_provider_osismodelbase(j.code.classGetJSRootModelBase()):
     def _meta(self):
         del self._P__meta
 
+
+    def new_acl(self,value=None):
+
+        if value==None:
+            value2=j.core.codegenerator.getClassJSModel("osismodel","robot","ace")()
+        else:
+            value2=value
+        
+        self._P_acl.append(value2)
+        if self._P_acl[-1].__dict__.has_key("_P_id"):
+            self._P_acl[-1].id=len(self._P_acl)
+        return self._P_acl[-1]
+        
+    
 
     def new_acl(self,value=None):
 
