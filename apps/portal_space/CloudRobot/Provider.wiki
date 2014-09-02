@@ -1,6 +1,7 @@
 @usedefault
 
 h2. Provider
+{{provider id:$$id}}
 
 h3. Details
 |*ID*|$$id|
@@ -11,3 +12,9 @@ h3. Details
 |*Login*|${login}|
 |*Secret*|${secret}|
 |*Params*|${params}|
+
+h3. ACEs
+||Group||Right||
+{% for ac in acl -%}
+|${ac.group}|${ac.right}|
+{% endfor %}

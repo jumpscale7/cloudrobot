@@ -25,3 +25,10 @@ h3. Details
 |*SSD Cost Distribution*|${cost_distr_ssd}|
 |*Disk Cost Distribution*|${cost_distr_disk}|
 |*Compute Cost Distribution*|${cost_distr_compute}|
+
+
+h3. ACEs
+||Group||Right||
+{% for ac in acl -%}
+|${ac.group}|${ac.right}|
+{% endfor %}

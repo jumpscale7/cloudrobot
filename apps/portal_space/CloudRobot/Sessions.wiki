@@ -4,9 +4,3 @@ h2. Sessions
 
 {{sessions}}
 
-list per user in grid
-this info comes out of redis production (NOT OSIS)
-
-make as wiki macro !!!
-
-

@@ -11,9 +11,8 @@ def main(j, args, params, tags, tasklet):
 
     import JumpScale.lib.cloudrobots
     j.servers.cloudrobot.init()
-
-    provider = j.servers.cloudrobot.osis_robot_provider.get(providerid)
-    provider = provider.dump()
+    
+    provider = j.servers.cloudrobot.osis.get('robot', 'provider', providerid)
 
     args.doc.applyTemplate(provider)
     params.result = (args.doc, args.doc)
