@@ -1,0 +1,126 @@
+# !rscript.new=
+# name=test=
+# content=this is a test=
+# channel=cloudrobot=
+# descr=interesting not=
+# secrets=[111]=
+
+# !rscript.list=
+
+# !rscript.get=
+# guid=fdbf30bc131548ddbf59da09378a3b6b=
+
+
+# !rscript.delete=
+# guid=fdbf30bc131548ddbf59da09378a3b6b=
+
+!job.new
+rscript_channel = channel
+rscript_name = test
+rscript_content = akdsjalskdj
+vars = {a:x, b:y, c:d}
+sessionid =111111111
+onetime=True
+userid =1
+state = OK
+start = 101219283
+end =101219283
+actions =[fdbf30bc131548ddbf59da09378a3b6b, fdbf30bc131548ddbf59da09378a3b6b]
+error = error
+out =thanks
+
+!job.list
+rscript_channel =
+rscript_name =
+state=
+
+# !job.get
+# guid =
+
+# !job.delete
+# guid=
+
+
+
+!action.new
+jobguid = fdbf30bc131548ddbf59da09378a3b6b
+rscript_channel = test
+rscript_name = alskjd
+userid = 1
+name = test
+code = aksjdh
+vars = {a:x, b:y, c:d}
+result = result
+log = llaksd
+state  = OK
+start = 1111111111
+end=1111111
+error = error
+
+!action.list
+rscript_channel =
+rscript_name =
+jobguid=
+state =          #(ERROR,OK,RUNNING,PENDING)=
+
+# !action.get
+# guid =
+
+# !action.delete
+# guid=
+
+!provider.new
+name = digitalocean
+type= digitalocean
+location= internet
+descr = askdha
+acl =meh
+login =a.b
+secret =secret
+params={a:x, b:y, c:d}
+
+!provider.list
+type =
+location =
+secret=
+
+# !provider.get
+# guid =
+
+# !provider.delete
+# guid=
+
+!resourcemachine.new
+name = machine
+descr = alskjd
+provider = fdbf30bc131548ddbf59da09378a3b6b
+location = internet
+acl = meh
+ipv4 = 127.0.0.1
+ipv6 = 
+rootpasswd = root
+cpucores = 1
+cpumhz = 1
+ssd_size = 1
+disk_size = 1
+mem_size = 1
+cost = 1
+ssd_used = 1
+disk_used = 1
+mem_used = 1
+cpu_used =1
+cost_distr_ssd =1
+cost_distr_disk = 1
+cost_distr_compute = 1
+
+!resourcemachine.list
+name =
+provider =
+# location=
+
+# !resourcemachine.get
+# guid =
+
+# !resourcemachine.delete
+# guid=
+

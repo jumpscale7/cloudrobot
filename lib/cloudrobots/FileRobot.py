@@ -40,7 +40,7 @@ class FileRobot():
                     name="%s_%s_%s_%s.txt"%(j.base.time.getTimeEpoch(),j.base.time.getLocalTimeHRForFilesystem(),name0,userid)
                     # j.system.fs.writeFile("%s/%s/jobs/%s"%(self.basepath,channel,name),C)
 
-                    print "PROCESS:%s"%path            
+                    print "PROCESS:%s"%path          
 
                     session=j.servers.cloudrobot.sessionGet(userid,"file",reset=True)
                     session.channel=channel

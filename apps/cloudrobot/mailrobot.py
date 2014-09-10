@@ -14,6 +14,6 @@ logger.setLevel(logging.ERROR)
 
 from robots import *
 
-j.servers.cloudrobot.startMailServer(robots=robots)
+j.servers.cloudrobot.startMailServer()
 
 j.application.stop(0)

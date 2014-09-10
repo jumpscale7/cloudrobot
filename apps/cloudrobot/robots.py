@@ -23,20 +23,24 @@ if "ms1_iaas" in robots2:
     import JumpScale.lib.cloudrobotservices.ms1_iaas
     robots["ms1_iaas"]= j.robots.ms1_iaas.getRobot()
 
-if "youtrack" in robots2:    
-    import JumpScale.lib.cloudrobotservices.youtrack
+if "cloudrobot" in robots2:
+    import JumpScale.lib.cloudrobotservices.cloudrobot
+    robots["cloudrobot"] = j.robots.cloudrobot.getRobot()
 
-    for item in jp.hrd_instance.getList("cloudrobot.robots"):
-        if item.find("youtrack")==0:
-            tmp,ytinstance=item.split("/",1)
-            ytinstance=ytinstance.strip()
+# if "youtrack" in robots2:    
+#     import JumpScale.lib.cloudrobotservices.youtrack
 
-    jp_yt=j.packages.findNewest(name="youtrack_client",domain="serverapps")
-    jp_yt=jp_yt.load(instance=ytinstance)
+#     for item in jp.hrd_instance.getList("cloudrobot.robots"):
+#         if item.find("youtrack")==0:
+#             tmp,ytinstance=item.split("/",1)
+#             ytinstance=ytinstance.strip()
 
-    url=jp_yt.hrd_instance.get("youtrack.url")
+#     jp_yt=j.packages.findNewest(name="youtrack_client",domain="serverapps")
+#     jp_yt=jp_yt.load(instance=ytinstance)
+
+#     url=jp_yt.hrd_instance.get("youtrack.url")
     
-    robots["youtrack"]= j.robots.youtrack.getRobot(url)
+#     robots["youtrack"]= j.robots.youtrack.getRobot(url)
 
 if "user" in robots2:        
     import JumpScale.lib.cloudrobotservices.usermgmt

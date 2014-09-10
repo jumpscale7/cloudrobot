@@ -4,6 +4,7 @@ import JumpScale.baselib.hash
 from TxtRobotHelp import TxtRobotHelp
 import JumpScale.baselib.mailclient
 import JumpScale.lib.cloudrobots
+import json
 
 import JumpScale.baselib.redis
 import copy
