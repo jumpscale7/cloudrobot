@@ -238,6 +238,7 @@ class Job():
             result=j.servers.cloudrobot.robots[channel].process(msg,userid,sessionid,jobguid)
 
         msg=self._executePrepare()
+
         jobredis=j.clients.redisworker.execFunction(execRobotJob,msg=msg,channel=self.model.rscript_channel,\
             userid=self.model.userid,sessionid=self.model.sessionid,jobguid=self.model.guid,\
             _category="robot", _organization="jumpscale",_timeout=600,\
