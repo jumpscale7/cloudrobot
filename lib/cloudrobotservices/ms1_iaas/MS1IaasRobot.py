@@ -15,6 +15,10 @@ mothership1 (ms1)
 machine (m)
 - list (l)
 
+machine (m)
+- print (p)
+-- name (n)
+
 - new (create,c,n)
 -- name
 -- description (descr)
@@ -75,6 +79,7 @@ machine (m)
 
 - deploysshkey
 -- user (u)
+-- key (k)
 
 template (templates,image,images)
 - list
@@ -137,6 +142,24 @@ class MS1RobotCmds():
             
         machine_id = j.tools.ms1.deployMachineDeck(templateid=templateid,**args)
         return 'Machine created successfully. Machine ID: %s ' % machine_id
+
+    def machine__print(self, **args):
+        self._setSessionJob()
+        machineId=args["name"]        
+        
+        out=""
+        machine=j.tools.ms1.getMachineObject(**args)
+
+        machine.pop('accounts')
+
+        out+=j.servers.cloudrobot.obj2out(machine)+"\n"
+
+        items=j.tools.ms1.listPortforwarding(**args)
+
+        out+="PORTFORWARDING RULES:\n"
+        out+=j.servers.cloudrobot.obj2out(items)+"\n"
+
+        return out
 
     def machine__list(self, **args):
         self._setSessionJob()
@@ -229,22 +252,30 @@ class MS1RobotCmds():
         name=args.pop("name")
         ssh=j.tools.ms1._getSSHConnection(spacesecret,name,**args)        
 
-        if args.has_key("user"):
-            userid=args["user"]        
+        if args.has_key("key"):
+            key=args["key"]
         else:
-            userid=self.action.job.session.userid
-        
-        user=j.servers.cloudrobot.osis_oss_user.simpleSearch({"id":userid})
-        if len(res)==0:
-            j.events.inputerror_critical("Could not find user with id:%s"%userid,"cloudrobot.auth")            
+            if args.has_key("user"):
+                user=args["user"]        
+            else:
+                user=str(self.action.job.session.userid)
 
-        key=user["sshpubkey"]
+
+            data=self.redis.hget("users",user)
+            if data==None:
+                raise RuntimeError("E:Could not find user %s, make sure ossusers are synced, can do in channel user: !oss.sync")
+
+            user=json.loads(data)
+            key=user["sshpubkey"]
 
         rloc="/root/.ssh/authorized_keys"
         C=ssh.file_read(rloc)
-        if C.find(key)==-1:
-            print "add key"
-            C+="\nkey\n"
-            ssh.file_write(rloc,key)
-            return "key deployed"
+
+        idkey=key.split(" ")[-1]
+        if idkey.find("@")<>-1:        
+            if C.find(idkey)==-1:
+                print "add key"
+                C+="\nkey\n"
+                ssh.file_write(rloc,key)
+                return "key deployed"
         return "key was already deployed"

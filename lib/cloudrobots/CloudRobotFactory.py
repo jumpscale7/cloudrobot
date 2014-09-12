@@ -7,7 +7,7 @@ import ujson as json
 import time
 import JumpScale.baselib.redisworker
 import JumpScale.grid.osis
-
+import yaml
 import sys
 
 class Empty():
@@ -382,9 +382,9 @@ class Action():
     def _processVars(self,session,job):
         def process(vars,session,job,varsout,changeVars=False):
             for key,val in vars.iteritems():
-                if val.find("#")<>-1:
+                if str(val).find("#")<>-1:
                     val=val.split("#",1)[0].strip()                
-                if val.find("$")<>-1:
+                if str(val).find("$")<>-1:
                     for toreplace,replace in job.vars.iteritems():
                         val=val.replace("$%s"%toreplace,str(replace))
                     for toreplace,replace in session.vars.iteritems():
@@ -402,6 +402,8 @@ class Action():
         self.vars=varsout
 
         return varsout
+
+
 
     def __repr__(self):       
         return str(self.model)
@@ -519,3 +521,9 @@ class CloudRobotFactory(object):
         self.redis.hdel("cloudrobot:currentsessions",userid)
         #@todo remove sessions for the user
 
+    def obj2out(self,obj):
+        if not j.basetype.string.check(obj):
+            resultstr=yaml.dump(obj, default_flow_style=False).replace("!!python/unicode ","")
+            resultstr=resultstr.replace("'","")
+            return resultstr
+        return obj

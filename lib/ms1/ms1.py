@@ -61,7 +61,6 @@ class MS1(object):
         space=json.loads(self.redis_cl.hget('cloudrobot:cloudspaces:secrets', space_secret))
         return space
 
-
     def getCloudspaceId(self, space_secret):
         space=self.getCloudspaceObj(space_secret)
         return space["id"]
@@ -251,6 +250,11 @@ class MS1(object):
 
         return machine_id
 
+    def getMachineObject(self,spacesecret, name,**args):
+        api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
+        machine = machines_actor.get(machine_id)
+        return machine
+
     def listImages(self,spacesecret,**args):
         api = self.getApiConnection(spacesecret)
         cloudspaces_actor = api.getActor('cloudapi', 'cloudspaces')
@@ -410,6 +414,28 @@ class MS1(object):
         job.save()
         return job.vars
                 
+    def listPortforwarding(self,spacesecret, name,**args):
+        api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)        
+        cloudspaces_actor = api.getActor('cloudapi', 'cloudspaces')
+
+        machine = machines_actor.get(machine_id)
+        if machine['cloudspaceid'] != cloudspace_id:
+            return 'Machine %s does not belong to cloudspace whose secret is given' % name
+
+        portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
+        items=portforwarding_actor.list(cloudspace_id)
+
+        if len(machine["interfaces"])>0:
+            local_ipaddr=machine["interfaces"][0]['ipAddress'].strip()
+        else:
+            raise RuntimeError("cannot find local ip addr")
+        
+        items=[]
+        for item in portforwarding_actor.list(cloudspace_id):
+            if item['localIp']==local_ipaddr:
+                items.append(item)
+        return items
+
     def _getSSHConnection(self, spacesecret, name, **args):
         api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
         job=self.job
