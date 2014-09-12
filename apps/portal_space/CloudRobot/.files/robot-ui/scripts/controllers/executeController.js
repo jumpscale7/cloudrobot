@@ -1,5 +1,5 @@
 'use strict';
-
+//
 var robotAngularApp = angular.module('robotAngularApp')
 .controller('executeController', ['$scope','$window','rScript','jobs','$filter','$timeout','usSpinnerService', function($scope, $window,rScript, jobs,$filter, $timeout, usSpinnerService) {
     if(document.getElementById("executeOncecode")){
@@ -44,17 +44,17 @@ var robotAngularApp = angular.module('robotAngularApp')
                       $scope.executeOnceMsg = $scope.SnippetName + " execution started.";
                       $timeout(function() {$scope.executeOnceMsg = "";}, 7000);
                       var splitStringArray;
-                      if(result.data.result){
-                        result.data.result = result.data.result.replace(/\/n/g, '\n');
-                        splitStringArray = result.data.result.split('\n');
+                      if(result.data.out){
+                        result.data.out = result.data.out.replace(/\/n/g, '\n');
+                        splitStringArray = result.data.out.split('\n');
                         for(var i = 0; i <= splitStringArray.length -1 ; i++){
                           $scope.datalogObject = $scope.datalogObject + (splitStringArray[i]);
                           if(i < splitStringArray.length -1){
                             $scope.datalogObject = $scope.datalogObject + '<br/>';
                           }
                         }
-                        result.data.result = "";
-                        result.data.result = $scope.datalogObject;
+                        result.data.out = "";
+                        result.data.out = $scope.datalogObject;
                         $scope.datalogObject = "";
                         splitStringArray = "";
                       }

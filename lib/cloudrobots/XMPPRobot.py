@@ -19,6 +19,12 @@ if sys.version_info < (3, 0):
 else:
     raw_input = input
 
+class XMPPState():
+    def __init__(self):
+        self.state="INIT"
+        self.lastmsg=""
+        self.lastaction=""
+
 class XMPPRobot(sleekxmpp.ClientXMPP):
     def __init__(self, username, passwd):
         self.robots = {}
@@ -47,6 +53,8 @@ class XMPPRobot(sleekxmpp.ClientXMPP):
 
         self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
         self.redisq=j.clients.redis.getRedisQueue("127.0.0.1", 7768,"xmpp")
+
+        self.userstate={}
 
     def init(self):
 
@@ -108,13 +116,105 @@ class XMPPRobot(sleekxmpp.ClientXMPP):
                    how it may be used.
         """
 
-        def sendState(userid):
-            state=j.servers.cloudrobot.getUserState(userid)
-            # state.pop("moddate")
-            hrddata=j.db.serializers.hrd.dumps(state)
-            j.servers.cloudrobot.sendUserMessage(userid,"state:\n%s"%hrddata)
 
         ffrom=str(msg["from"]).split("/")[0]
+
+        body=msg["body"]
+
+        def clean(body):
+
+            #now look for functions with no args
+            out=""
+            state="init"
+            lastfunct=""
+            for line in body.split("\n"):
+                line=line.strip()
+
+                if state=="infunc":
+                    if line.find("!")<>0 and line.find("=")==-1 and line.strip()<>"" and line.find("#")<>0:
+                        #next line after function is no param, so default param
+                        out+="default=\n"
+                    state="init"
+
+                if line.find("!")==0:
+                    state="infunc"
+                out+="%s\n"%line
+
+            body=out
+
+            print "####"
+            print body
+            print "####"
+        
+
+            #look for params with no ...
+            out=""
+            state="init"
+            lastvar=""
+            for line in body.split("\n"):
+                line=line.strip()
+
+                if state=="invar":
+                    if (line.find("!")==0 or line.find("=")<>-1) and line.find("#")<>0:
+                        #next cmd or arg
+                        out+="%s\n...\n"%lastvar.strip()
+                        lastvar=""
+                        state="init"
+                    else:
+                        lastvar+="%s\n"%line
+                        continue
+
+                if line=="" or line[0]=="#":
+                    continue
+
+                if line.find("=")<>-1 and line.find("...")==-1:                    
+                    pre,after=line.split("=",1)
+                    if after.strip()=="":
+                        state="invar"
+                        lastvar="%s...\n"%line
+                        continue
+
+                out+="%s\n"%line
+
+            if lastvar<>"":
+                out+="%s\n...\n"%lastvar.strip()
+
+
+            
+            return out
+
+        body=clean(body)
+
+        print "****"
+        print body
+        print "****"
+
+
+        # if body=="":
+        #     return
+
+        # if not self.userstate.has_key(ffrom):
+        #     self.userstate[ffrom]=XMPPState()
+
+        # if self.userstate[ffrom].state=="INFUNCTION":
+        #     self.userstate[ffrom].lastmsg+="%s\n"%body
+        #     body=self.userstate[ffrom].lastmsg
+        #     if self.userstate[ffrom].lastaction=="":
+        #         #not waiting on action so can put on empty again
+        #         self.userstate[ffrom]=XMPPState()
+
+        # if body.strip().find("!")=0:
+        #     self.userstate[ffrom].state="INFUNCTION"
+        #     self.userstate[ffrom].lastaction="%s\n"%body.strip("\n")
+        #         return
+
+        # if self.userstate[ffrom].state=="WAITARG":
+        #     if self.userstate[ffrom].lastaction<>"":
+
+
+        # print "####"
+        # print body
+        # print "####"
         
         try:
             userid=j.servers.cloudrobot.userIdGetFromXmpp(ffrom)
@@ -129,8 +229,7 @@ class XMPPRobot(sleekxmpp.ClientXMPP):
 
         if msg['type'] in ('chat', 'normal'):
 
-            try:
-                body=msg["body"]
+            try:                
                 if body.find("session")==0:
                     body=body.replace("session","")
                     sessionname=body.strip().strip(":=").strip()

@@ -42,6 +42,9 @@ class Session():
         job.save()        
         job.session=self
         self.jobs.append(job.model.guid)
+        while len(self.jobs)>50:
+            self.jobs.pop(0)
+
         return job
 
     def jobGet(self,guid):
@@ -50,6 +53,11 @@ class Session():
         job.model.sessionid=self.name
         job.model.userid=self.userid
         return job
+
+    def jobGetLast(self):
+        if len(self.jobs)>0:
+            jobguid=self.jobs[-1]  
+            return self.jobGet(jobguid)            
 
     def save(self):
         j.servers.cloudrobot.redis.hset("cloudrobot:sessions:%s"%(self.userid),self.name,json.dumps(self.__dict__))
@@ -92,9 +100,8 @@ class Session():
         #FIND ROBOT CMDS
         if msg.strip() in self.reservedCmds:                
             self._processRobotCmd(msg,"")
-
         if msg.find(" ")<>-1 and msg[0]<>"!" and msg[0]<>"#":
-            cmd=line.split(" ")[0].lower()
+            cmd=msg.split(" ")[0].lower()
             if cmd in self.reservedCmds:
                 arg=line.split(" ",1)[1]
                 self.processRobotCmd(cmd,arg)
@@ -102,6 +109,8 @@ class Session():
         foundcmd=False
         foundvars=False
         #now find vars
+        state="init"
+        lastvar=""
         for line in msg.split("\n"):
             line=line.strip()
             if line=="" or line[0]=="#":
@@ -109,12 +118,28 @@ class Session():
             if line.find("!")==0:
                 foundcmd=True
                 break
+
+            if state=="invar":
+                if line.find("...")==0:
+                    state="init"
+                    lastvar=lastvar.strip()+"\n"
+                    self.vars[name]=lastvar
+                    lastvar=""
+                else:
+                    lastvar+="%s\n"%line
+
             if line.find("=")<>-1:
-                name,val=line.split("=",1)
-                name=name.strip()
-                val=val.strip()
-                self.vars[name]=val
-                foundvars=True
+                if line.find("...")<>-1:
+                    #multiline var
+                    name,val=line.split("=",1)
+                    state="invar"
+                    foundvars=True
+                else:
+                    foundvars=True
+                    name,val=line.split("=",1)
+                    name=name.strip()
+                    val=val.strip()
+                    self.vars[name]=val
 
         if foundvars:
             self.save()
@@ -130,6 +155,7 @@ class Session():
             job=self.jobNew(channel, msg=msg, rscriptname=scriptname, args=args)
             job.executeAsync()
 
+            return job
 
     def _processRobotCmd(self,cmd,arg):
         print "ROBOTCMD:%s %s"%(cmd,arg)
@@ -250,7 +276,7 @@ class Job():
         #     data=json.dumps(self.__dict__)        
         #     j.servers.cloudrobot.redis.hset("robot:jobs",self.model.guid,data)
 
-    def waitExecutionDone(self):
+    def waitExecutionDone(self,updateSelf=True):
         print "wait for job:%s"%self.model.guid
         # while q.empty():
         #     print "queue empty for %s"%jobguid
@@ -258,7 +284,11 @@ class Job():
         q=self._getQueue()
         q.get()
         j.servers.cloudrobot.redis.delete("queues:robot:%s" % self.model.guid)
-        return 
+        if updateSelf:
+            cl = j.servers.cloudrobot.osis_robot_job
+            job=cl.get(self.model.guid)
+            self.model=job
+            self.vars=json.loads(self.model.vars)
 
     def actionNew(self,name="",code="",vars={}):
         action=Action()        
@@ -273,6 +303,14 @@ class Job():
         action.session=self.session
         action.job=self
         return action
+
+    def sendUserMessage(self,msg,html=False):   
+        if msg.strip()=="":
+            return
+        if msg[-1]<>"\n":
+            msg+="\n"
+        self.session.sendUserMessage(msg,html=html)
+        self.model.out+=msg
 
     def actionGet(self,guid):
         action =Action(guid=guid)
@@ -333,6 +371,13 @@ class Action():
             msg+="\n"
         return msg
 
+    def sendUserMessage(self,msg,html=False):   
+        if msg.strip()=="":
+            return
+        if msg[-1]<>"\n":
+            msg+="\n"
+        self.job.sendUserMessage(msg,html=html)
+        self.model.out+=msg
 
     def _processVars(self,session,job):
         def process(vars,session,job,varsout,changeVars=False):

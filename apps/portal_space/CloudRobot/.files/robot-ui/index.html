@@ -114,7 +114,7 @@
                       </div>
                       <div class="modal-body" style="overflow-y: scroll; max-height: 400px;">
                         <div ng-show="jobinfo" class="jobinfo sample-show-hide font-15">
-                        <span ng-bind-html="jobinfo.result | to_trustedHTML" class="jobinfo-result"></span>
+                        <span ng-bind-html="jobinfo.out | to_trustedHTML" class="jobinfo-result"></span>
                       </div>
                       <div class="sample-show-hide font-15" style="margin-top: 25px; padding: 13px;">
                         Are you sure you want to remove rscript?
@@ -141,7 +141,7 @@
               </div>
               <div class="modal-body" style="overflow-y: scroll; max-height: 400px;">
                 <div ng-show="jobinfo" class="jobinfo sample-show-hide font-15">
-                <span class="jobinfo-result" ng-bind-html="jobinfo.result | to_trustedHTML"></span>
+                <span class="jobinfo-result" ng-bind-html="jobinfo.out | to_trustedHTML"></span>
               </div>
               <div id="jobid" ng-show="jobid" class="sample-show-hide font-15">
                 {{jobid}}

@@ -20,6 +20,8 @@ class robot_action_osismodelbase(j.code.classGetJSRootModelBase()):
     
         self._P_result=""
     
+        self._P_out=""
+    
         self._P_log=""
     
         self._P_state=""
@@ -217,6 +219,26 @@ class robot_action_osismodelbase(j.code.classGetJSRootModelBase()):
     @result.deleter
     def result(self):
         del self._P_result
+
+
+    @property
+    def out(self):
+        return self._P_out
+    @out.setter
+    def out(self, value):
+        
+        if not isinstance(value, str) and value is not None:
+            if isinstance(value, basestring) and j.basetype.string.checkString(value):
+                value = j.basetype.string.fromString(value)
+            else:
+                msg="property out input error, needs to be str, specfile: /opt/jumpscale/apps/osis/logic/robot/model.spec, name model: action, value was:" + str(value)
+                raise RuntimeError(msg)
+    
+
+        self._P_out=value
+    @out.deleter
+    def out(self):
+        del self._P_out
 
 
     @property

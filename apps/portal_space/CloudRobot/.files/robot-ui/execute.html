@@ -107,7 +107,7 @@
                   </div>
                   <div class="modal-body" style="overflow-y: scroll; max-height: 400px;">
                     <div ng-show="jobinfo" class="jobinfo sample-show-hide font-15">
-                    <span ng-bind-html="jobinfo.result | to_trustedHTML" class="jobinfo-result"></span>
+                    <span ng-bind-html="jobinfo.out | to_trustedHTML" class="jobinfo-result"></span>
                   </div>
                   <div id="jobid" ng-show="jobid" class="sample-show-hide">
                     {{jobid}}

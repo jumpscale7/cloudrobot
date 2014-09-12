@@ -52,6 +52,7 @@
     prop:code str,,
     prop:vars str,,
     prop:result str,,
+    prop:out str,,
     prop:log str,,
     prop:state str,, (ERROR,OK,RUNNING,PENDING)
     prop:start int,,epoch of start

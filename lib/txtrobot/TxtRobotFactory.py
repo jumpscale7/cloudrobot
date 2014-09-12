@@ -437,6 +437,8 @@ class TxtRobot():
 
         result=None
 
+        self.cmdobj.action=action
+
         key="%s__%s"%(entity,cmd)
         if self.cmdobj<>None:
             if hasattr(self.cmdobj,key):
@@ -445,6 +447,7 @@ class TxtRobot():
                 except Exception,e:
                     action.raiseError("could not eval code.")
                     return action
+
                 #now execute the code
                 try:
                     result=method(**args)
@@ -452,7 +455,7 @@ class TxtRobot():
                     if str(e).find("E:")==0 or str(e).find("F:")==0:
                         # j.errorconditionhandler.processPythonExceptionObject(e)
                         e=str(e)[2:]
-                        # print e
+                        print e
                         action.raiseError("execution error")
                         return action                            
                     else:

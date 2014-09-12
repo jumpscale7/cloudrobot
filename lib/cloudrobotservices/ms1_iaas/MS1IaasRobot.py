@@ -47,10 +47,10 @@ machine (m)
 -- pubip
 -- pubipport
 
-- execssh
+- execssh (exec)
 -- name (n)
 -- sshport
--- script #predefined vars: $passwd,$ipaddr,$name
+-- script (default)#predefined vars: $passwd,$ipaddr,$name
 
 - setpasswd
 -- name (n)
@@ -58,11 +58,11 @@ machine (m)
 
 - execcuisine (cuisine)
 -- name (n)
--- script #predefined vars: $passwd,$ipaddr,$name
+-- script  (default)#predefined vars: $passwd,$ipaddr,$name
 
 - execjs (execjumpscript,js,jumpscript)
 -- name (n)
--- script #predefined vars: $passwd,$ipaddr,$name
+-- script  (default) #predefined vars: $passwd,$ipaddr,$name
 
 - initjs (initjumpscale)
 -- name (n)
@@ -116,7 +116,13 @@ class MS1RobotCmds():
         self.channel="machine"
         self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
 
+    def _setSessionJob(self):
+        j.tools.ms1.session=self.action.job.session
+        j.tools.ms1.job=self.action.job
+        j.tools.ms1.action=self.action
+
     def machine__new(self, **args):
+        self._setSessionJob()
         template=args["template"]        
         res=j.tools.ms1.listImages(**args)
         try:
@@ -133,6 +139,7 @@ class MS1RobotCmds():
         return 'Machine created successfully. Machine ID: %s ' % machine_id
 
     def machine__list(self, **args):
+        self._setSessionJob()
         res=j.tools.ms1.listMachinesInSpace(**args)
         out=""
         for item in res:            
@@ -144,6 +151,7 @@ class MS1RobotCmds():
         return out
         
     def machine__delete(self, **args):
+        self._setSessionJob()
         res=j.tools.ms1.deleteMachine(**args)
         if res=="NOTEXIST":
             return "Machine did not exist, no need to delete"
@@ -151,33 +159,43 @@ class MS1RobotCmds():
             return 'Machine %s was deleted successfully ' % args['name']
 
     def machine__start(self, **args):
+        self._setSessionJob()
         status = j.tools.ms1.startMachine(**args)
         return 'Machine %s was started successfully.' % (args['name'])        
 
     def machine__stop(self, **args):
+        self._setSessionJob()
         status = j.tools.ms1.stopMachine(**args)
         return 'Machine %s was stopped successfully.' % (args['name'])        
 
     def machine__snapshot(self, **args):
+        self._setSessionJob()
         status = j.tools.ms1.snapshotMachine(**args)
         return 'Snapshot %s for %s was successfull.' % (args['snapshotname'],args['name'])
 
     def machine__tcpportforward(self, **args):
+        self._setSessionJob()
         status = j.tools.ms1.createTcpPortForwardRule(**args)
         return 'Port-forwarding rule was created successfully.' 
 
     def machine__udpportforward(self, **args):
+        self._setSessionJob()
         status = j.tools.ms1.createUdpPortForwardRule(**args)
         return 'Port-forwarding rule was created successfully.' 
 
     def machine__execssh(self, **args):
+        if args.has_key("default"):
+            args["script"]=args["default"]
+        self._setSessionJob()
         return j.tools.ms1.execSshScript(**args)
 
     def mothership1__login(self, **args):
+        self._setSessionJob()
         result = j.tools.ms1.setClouspaceSecret(**args)
         return "spacesecret=%s" % (result)
 
     def template__list(self, **args):
+        self._setSessionJob()
         out=""
         res=j.tools.ms1.listImages(**args)
 
@@ -190,6 +208,7 @@ class MS1RobotCmds():
         return out
 
     def space__getfree_ip_port(self,**args):
+        self._setSessionJob()
         res=j.tools.ms1.getFreeIpPort(**args)
         out=""
         for key,val in res.iteritems():
@@ -199,6 +218,7 @@ class MS1RobotCmds():
 
 
     def machine__deploysshkey(self,**args):
+        self._setSessionJob()
 
         tocheck=["spacesecret","name"]
         for item in tocheck:
@@ -210,12 +230,14 @@ class MS1RobotCmds():
         ssh=j.tools.ms1._getSSHConnection(spacesecret,name,**args)        
 
         if args.has_key("user"):
-            user=args["user"]        
+            userid=args["user"]        
+        else:
+            userid=self.action.job.session.userid
+        
+        user=j.servers.cloudrobot.osis_oss_user.simpleSearch({"id":userid})
+        if len(res)==0:
+            j.events.inputerror_critical("Could not find user with id:%s"%userid,"cloudrobot.auth")            
 
-        if not self.redis.hexists("users",user):
-            raise RuntimeError("E:Could not find user:%s. \nmake sure !oss.sync has been executed."%user)
-
-        user=json.loads(self.redis.hget("users",user))
         key=user["sshpubkey"]
 
         rloc="/root/.ssh/authorized_keys"

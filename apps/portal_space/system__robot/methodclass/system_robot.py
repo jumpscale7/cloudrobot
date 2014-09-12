@@ -178,18 +178,29 @@ class system_robot(j.code.classGetBase()):
 
         users = self.osis_user.simpleSearch({'id': username})
         if len(users)>0:
-            user=users[0]["id"]
+            userid=users[0]["id"]
         else:
             raise RuntimeError("Authentication error: user not found.")
         
-        jobguid=j.servers.cloudrobot.toFileRobot(channel,content,user,name)
+        # sessionname=j.servers.cloudrobot.getUserSession(userid)
+        session=j.servers.cloudrobot.sessionGet(userid)
+        #force xmpp return
+        if "xmpp" not in session.retchannels:
+            session.retchannels.append["xmpp"]
+            session.save() 
 
+        session.sendUserMessage("Start executing a direct command on channel:%s"%channel)
+
+        job=session.process(content,channel=channel,scriptname="rest",args={})
+
+        if job==None:
+            return
+        
         if str(wait)=="1":
-            j.servers.cloudrobot.jobWait(jobguid)
-            job=self.job_get(jobguid)
-            return job
+            job.waitExecutionDone()
+            return job.model
         else:
-            return jobguid
+            return job.model.guid
     
     def rscript_execute_once(self, name,channel,content, wait=1, **kwargs):
         """
@@ -200,23 +211,33 @@ class system_robot(j.code.classGetBase()):
         if name=="" or name==None:
             name="unknown"
 
-
         ctx=kwargs["ctx"]
         username = ctx.env["beaker.session"]["user"]
         users = self.osis_user.simpleSearch({'id': username})
         if len(users)>0:
-            user=users[0]["id"]
+            userid=users[0]["id"]
         else:
             raise RuntimeError("Authentication error: user not found.")
 
-        jobguid=j.servers.cloudrobot.toFileRobot(channel,content,user,name)
+
+        session=j.servers.cloudrobot.sessionGet(userid)
+        #force xmpp return
+        if "xmpp" not in session.retchannels:
+            session.retchannels.append["xmpp"]
+            session.save() 
+
+        job=session.process(content,channel=channel,scriptname="rest",args={})
+
+        if job==None:
+            return ""
 
         if str(wait)=="1":
-            j.servers.cloudrobot.jobWait(jobguid)
-            job=self.job_get(jobguid)
-            return job
+            job.waitExecutionDone()
+            return job.model.obj2dict()
         else:
-            return jobguid
+            return job.model.guid
+
+
 
     def rscript_exists(self, name, channel, secrets, **kwargs):
         """
@@ -371,6 +392,7 @@ class system_robot(j.code.classGetBase()):
         param:secrets secrets used if any; scripts can have secrets attached to them (comma separated)
         result str
         """
+
         if secrets == None:
             secrets = ''
 

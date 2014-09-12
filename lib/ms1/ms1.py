@@ -20,7 +20,7 @@ class Output(object):
         self.lastlines=self.lastlines.replace("\n\n","\n")
         self.lastlines=self.lastlines.replace("\n\n","\n")
         self.lastlines=self.lastlines.replace("\n\n","\n")
-        j.servers.cloudrobot.sendUserMessage("admin",self.lastlines,html=False) 
+        self.ms1.action.sendUserMessage(self.lastlines)
         self.lastlines=""
         self.counter=0
 
@@ -51,6 +51,7 @@ class MS1(object):
         self.IMAGE_NAME = 'Ubuntu 14.04 (JumpScale)'
         self.redis_cl = j.clients.redis.getGeventRedisClient('localhost', 7768)
         self.stdout=Output()
+        self.stdout.ms1=self
         self.stdout.prevout=sys.stdout
 
 
@@ -84,28 +85,8 @@ class MS1(object):
         self.redis_cl.hset('cloudrobot:cloudspaces:secrets', auth_key, json.dumps(cloudspace))
         return auth_key
 
-    # def getCloudspaceLocation(self, space_secret):
-    #     cloudspace_id = self.getCloudspaceId(space_secret)
-    #     portal_client = j.core.portal.getClient('www.mothership1.com', 443, space_secret)
-    #     cloudspaces_actor = portal_client.getActor('cloudapi', 'cloudspaces')
-    #     cloudspace = [cs for cs in cloudspaces_actor.list() if cs['id'] == cloudspace_id][0] # TODO use get instead of list
-    #     return cloudspace['location']
-
-#    def getApiConnection(self, space_secret):
-#        location = self.getCloudspaceLocation(space_secret)
-#        host = 'www.mothership1.com' if location == 'ca1' else '%s.mothership1.com' % location
-#        try:
-#            j.core.portal.getClient(host, 443, space_secret)
-#        except Exception,e:
-#            from IPython import embed
-#            print "DEBUG NOW getApiConnection"
-#            embed()
-#            raise RuntimeError("E:Could not login to MS1 API.")
-
     def sendUserMessage(self,msg,level=2,html=False,args={}):
-        if args.has_key("msg_userid"):
-            user_id=args["msg_userid"]
-            j.servers.cloudrobot.sendUserMessage(user_id,msg,html=html)
+        self.action.sendUserMessage(msg,html=html)
 
     def getApiConnection(self, space_secret,**args):
         cs=self.getCloudspaceObj(space_secret)
@@ -182,6 +163,10 @@ class MS1(object):
         imagename= fedora,windows,ubuntu.13.10,ubuntu.12.04,windows.essentials,ubuntu.14.04
                    zentyal,debian.7,arch,fedora,centos,opensuse,gitlab,ubuntu.jumpscale
         """
+
+        self.session.vars["name"]=name
+        self.session.save()
+
         ssdsize=int(ssdsize)
         memsize=int(memsize)
         ssdsizes={}
@@ -213,8 +198,10 @@ class MS1(object):
 
         cloudspace_id = self.getCloudspaceId(spacesecret)
 
-        j.cloudrobot.vars["cloudspace.id"]=cloudspace_id
-        j.cloudrobot.vars["machine.name"]=name
+        job=self.job
+
+        job.vars["cloudspace.id"]=cloudspace_id
+        job.vars["machine.name"]=name
 
         memsize2=memsizes[memsize]
         size_ids = [size['id'] for size in sizes_actor.list() if size['memory'] == int(memsize2)]
@@ -227,6 +214,7 @@ class MS1(object):
         if not j.basetype.integer.check(templateid):
             raise RuntimeError("E:template id needs to be of type int, a bug happened, please contact MS1.")
 
+        self.sendUserMessage("create machine: %s"%(name))
         try:
             machine_id = machines_actor.create(cloudspaceId=cloudspace_id, name=name, description=description, \
                 sizeId=size_ids[0], imageId=templateid, disksize=int(ssdsize2))
@@ -235,7 +223,10 @@ class MS1(object):
                 raise RuntimeError("E:Could not create machine it does already exist.")            
             raise RuntimeError("E:Could not create machine, unknown error.")
         
-        j.cloudrobot.vars["machine.id"]=machine_id
+        job.vars["machine.id"]=machine_id
+
+        self.sendUserMessage("machine created")
+        self.sendUserMessage("find free ipaddr & tcp port")
 
         for _ in range(30):
             machine = machines_actor.get(machine_id)
@@ -246,11 +237,17 @@ class MS1(object):
         if not j.basetype.ipaddress.check(machine['interfaces'][0]['ipAddress']):
             raise RuntimeError('E:Machine was created, but never got an IP address')
 
-        j.cloudrobot.vars["machine.ip.addr"]=machine['interfaces'][0]['ipAddress']
-
+        job.vars["machine.ip.addr"]=machine['interfaces'][0]['ipAddress']
 
         #push initial key
-        ssh=j.tools.ms1._getSSHConnection(spacesecret,name,**args)        
+        self.sendUserMessage("push initial ssh key")
+        ssh=j.tools.ms1._getSSHConnection(spacesecret,name,**args)
+
+        self.sendUserMessage("machine active & reachable")
+  
+        self.sendUserMessage("ssh %s -p %s"%(self.job.vars["space.ip.pub"],self.job.vars["machine.last.tcp.port"]))
+
+        job.save()
 
         return machine_id
 
@@ -304,9 +301,13 @@ class MS1(object):
         except Exception,e:
             if str(e).find("Could not find machine")<>-1:
                 return "NOTEXIST"
+            if str(e).find("Space secret does not exist")<>-1:
+                return "E:SPACE SECRET IS NOT CORRECT"
+            raise RuntimeError(e)
         try:
             machines_actor.delete(machine_id)
         except Exception,e:
+            print e
             raise RuntimeError("E:could not delete machine %s"%name)
         return "OK"
 
@@ -335,6 +336,7 @@ class MS1(object):
         return "OK"
 
     def createTcpPortForwardRule(self, spacesecret, name, machinetcpport, pubip="", pubipport=22,**args):
+        self.job.vars["machine.last.tcp.port"]=pubipport
         return self._createPortForwardRule(spacesecret, name, machinetcpport, pubip, pubipport, 'tcp')
 
     def createUdpPortForwardRule(self, spacesecret, name, machineudpport, pubip="", pubipport=22,**args):
@@ -343,21 +345,22 @@ class MS1(object):
     def deleteTcpPortForwardRule(self, spacesecret, name, machinetcpport, pubip, pubipport,**args):
         return self._deletePortForwardRule(spacesecret, name, pubip, pubipport, 'tcp')
 
-    def _createPortForwardRule(self, spacesecret, name, machineport, pubip, pubipport, protocol,**args):
-        self.sendUserMessage("Create PFW rule:%s %s %s"%(pubip,pubipport,protocol),args=args)
+    def _createPortForwardRule(self, spacesecret, name, machineport, pubip, pubipport, protocol):
+        # self.sendUserMessage("Create PFW rule:%s %s %s"%(pubip,pubipport,protocol),args=args)
         api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
         portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
         if pubip=="":
             cloudspaces_actor = api.getActor('cloudapi', 'cloudspaces')
             cloudspace = cloudspaces_actor.get(cloudspace_id)   
-            pubip=cloudspace['publicipaddress'] 
-        j.cloudrobot.vars["space.ip.pub"]=pubip
+            pubip=cloudspace['publicipaddress']         
+        self.job.vars["space.ip.pub"]=pubip
         self._deletePortForwardRule(spacesecret, name, pubip, pubipport, 'tcp')
         portforwarding_actor.create(cloudspace_id, pubip, str(pubipport), machine_id, str(machineport), protocol)
+        self.job.save()
         return "OK"
 
-    def _deletePortForwardRule(self, spacesecret, name,pubip,pubipport, protocol,**args):
-        self.sendUserMessage("Delete PFW rule:%s %s %s"%(pubip,pubipport,protocol),args=args)
+    def _deletePortForwardRule(self, spacesecret, name,pubip,pubipport, protocol):
+        # self.sendUserMessage("Delete PFW rule:%s %s %s"%(pubip,pubipport,protocol),args=args)
         api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
         portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
         if pubip=="":
@@ -377,11 +380,11 @@ class MS1(object):
         cloudspace_id = self.getCloudspaceId(spacesecret)
         cloudspaces_actor = api.getActor('cloudapi', 'cloudspaces')
 
-        vars={}
+        job=self.job
     
         space=cloudspaces_actor.get(cloudspace_id)
-        vars["space.free.tcp.addr"]=space["publicipaddress"]
-        j.cloudrobot.vars["space.ip.pub"]=space["publicipaddress"]
+        job.vars["space.free.tcp.addr"]=space["publicipaddress"]
+        job.vars["space.ip.pub"]=space["publicipaddress"]
         pubip=space["publicipaddress"]
 
         portforwarding_actor = api.getActor('cloudapi', 'portforwarding')
@@ -402,15 +405,14 @@ class MS1(object):
         if i>mmax-1:
             raise RuntimeError("E:cannot find free tcp or udp port.")
 
-        vars["space.free.tcp.port"]=str(i)
-        vars["space.free.udp.port"]=str(i)
-
-        return vars
-        
-        
-
+        job.vars["space.free.tcp.port"]=str(i)
+        job.vars["space.free.udp.port"]=str(i)
+        job.save()
+        return job.vars
+                
     def _getSSHConnection(self, spacesecret, name, **args):
         api,machines_actor,machine_id,cloudspace_id=self._getMachineApiActorId(spacesecret,name)
+        job=self.job
         
         mkey="%s_%s"%(cloudspace_id,machine_id)
         print "check ssh connection:%s"%mkey
@@ -468,7 +470,7 @@ class MS1(object):
                 raise RuntimeError("E:could not find ip address for machine:%s"%name)
             localIP=machine["interfaces"][0]["ipAddress"]        
 
-        self.createTcpPortForwardRule(spacesecret, name, 22, pubipport=tempport)
+        self.createTcpPortForwardRule(spacesecret, name, 22, pubipport=tempport,**args)
 
         cloudspace = cloudspaces_actor.get(cloudspace_id)   
         pubip=cloudspace['publicipaddress'] 
@@ -501,7 +503,6 @@ class MS1(object):
 
         ssh_connection=self._getSSHConnection(spacesecret,name,**args)
 
-
         if args.has_key("lines"):
             script=args["lines"]
             out=""
@@ -521,6 +522,8 @@ class MS1(object):
         elif args.has_key("script"):
             script=args["script"]
             script="set +ex\n%s"%script
+            print "SSHPREPARE:"
+            print script
             ssh_connection.file_write("/tmp/do.sh",script)
             ssh_connection.fabric.context_managers.show("output")
 
@@ -534,6 +537,10 @@ class MS1(object):
                 out=ssh_connection.run("sh /tmp/do.sh",combine_stderr=True)
             except BaseException,e:
                 sys.stdout=self.stdout.prevout
+                if self.stdout.lastlines.strip()<>"":                    
+                    msg="Could not execute sshscript:\n%s\nError:%s\n"%(script,self.stdout.lastlines)
+                    self.action.raiseError(msg)
+                    self.stdout.lastlines=""
                 print e
                 raise RuntimeError("E:Could not execute sshscript, errors.")
             sys.stdout=self.stdout.prevout
