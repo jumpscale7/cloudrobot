@@ -275,3 +275,6 @@ b, strong{
   position: relative; 
   margin: 10px 0;
 }
+.show-execute-result{
+  margin-bottom: 20px;
+}

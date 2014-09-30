@@ -69,10 +69,7 @@
     <div id="main" class="container">
         <div id="alerts-block" class="row">
           <div ng-controller="executeController">
-          <div class="alert alert-warning sample-show-hide alert-msg" ng-show="secretsWarnAlert" role="alert">
-            <span>Please add secret code first.. <a href="#" data-toggle="modal" data-target="#showSecretModal">add now</a></span>
-          </div>
-          <h1 style="font-weight: normal; margin-top: 0; margin-bottom: 0; padding-left: 10px;">Execute</h1>
+          <h1 style="font-weight: normal; margin-top: 0; margin-bottom: 0; padding-left: 15px;">Execute</h1>
           <div class="row" style="height: 25px; margin-bottom: 10px;">
             <div class="alert alert-success sample-show-hide alert-msg" ng-show="executeOnceMsg" role="alert">
               {{executeOnceMsg}}
@@ -93,7 +90,7 @@
             </select>
             <input type="text" ng-model="SnippetName" placeholder="Enter rscript name. e.g. machine.youtrack" class="form-control sample-show-hide" style="margin-bottom: 15px;">
             <input type="checkbox" ng-model="waitFlag" ng-checked="waitFlag == 1" ng-true-value="1" ng-false-value="0" style="float: left; margin-top: 8px; margin-right: 10px;" class="sample-show-hide"><p style="margin-top: 7px;" class="sample-show-hide font-14">Wait until rscript get executed?</p>
-            <div style="margin-top: 25px; text-align: center;">
+            <div class="show-execute-result" style="margin-top: 25px; text-align: center;">
               <a href="#" class="btn btn-primary sample-show-hide pvs phm pts mrm" ng-disabled="secretsWarnAlert" ng-click="rScriptExecuteOnce()">Execute</a>
               <br />
               <a href="#" class="sample-show-hide font-14" ng-show="showExecuteResultLink" data-toggle="modal" data-target="#executeResultModal">Show execute result</a>

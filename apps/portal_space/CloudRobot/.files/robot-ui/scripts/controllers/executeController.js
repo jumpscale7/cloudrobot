@@ -1,5 +1,5 @@
 'use strict';
-//
+
 var robotAngularApp = angular.module('robotAngularApp')
 .controller('executeController', ['$scope','$window','rScript','jobs','$filter','$timeout','usSpinnerService', function($scope, $window,rScript, jobs,$filter, $timeout, usSpinnerService) {
     if(document.getElementById("executeOncecode")){
@@ -23,7 +23,7 @@ var robotAngularApp = angular.module('robotAngularApp')
               $scope.SnippetName = 'unknown';
             }
             usSpinnerService.spin('spinner');
-            rScript.executeOnce(executeOnceEditor.getValue(), $scope.SnippetName, $scope.SnippetChannelddl, $scope.waitFlag).then(
+            rScript.executeOnce(executeOnceEditor.getValue().replace(/#/g,encodeURIComponent('#')).replace(/\n/g,  " /n " ), $scope.SnippetName, $scope.SnippetChannelddl, $scope.waitFlag).then(
                 function(result) {
                     $scope.datalogObject = "";
                     if(result.status != 200){
@@ -35,7 +35,11 @@ var robotAngularApp = angular.module('robotAngularApp')
                     if($scope.waitFlag == 0){
                       $scope.executeOnceMsg = $scope.SnippetName + " executed successfully.";
                       $timeout(function() {$scope.executeOnceMsg = "";}, 7000);
-                      $scope.jobid = result.data;
+                      if(result.data.length > 3){
+                        $scope.jobid = result.data;
+                      }else{
+                        $scope.jobid = "No job id returned.";
+                      }
                       $('#executeResultModal').modal('show');
                       $timeout(function() {
                         usSpinnerService.stop('spinner');
@@ -58,7 +62,11 @@ var robotAngularApp = angular.module('robotAngularApp')
                         $scope.datalogObject = "";
                         splitStringArray = "";
                       }
-                      $scope.jobinfo = result.data;
+                      if(result.data.length > 3){
+                        $scope.jobinfo = result.data;
+                      }else{
+                        $scope.jobinfo = { out: "No job result returned."};
+                      }
                       $('#executeResultModal').modal('show');
                       $timeout(function() {
                         usSpinnerService.stop('spinner');

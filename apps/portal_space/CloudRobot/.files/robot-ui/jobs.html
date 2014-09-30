@@ -69,10 +69,7 @@
     <div id="main" class="container">
         <div id="alerts-block" class="row">
           <div ng-controller="jobsController">
-          <div class="alert alert-warning sample-show-hide alert-msg" ng-show="secretsWarnAlert" role="alert">
-            <span>Please add secret code first.. <a href="#" data-toggle="modal" data-target="#showSecretModal">add now</a></span>
-          </div>
-          <h1 style="font-weight: normal; margin-top: 0; margin-bottom: 15px;">Jobs</h1>
+          <h1 style="font-weight: normal; margin-top: 0; margin-bottom: 15px; padding-left: 15px;">Jobs</h1>
           <div class="alert alert-warning sample-show-hide alert-msg" ng-show="snippetMsg" role="alert">
             {{snippetMsg}}
           </div>
@@ -117,7 +114,7 @@
                   <tr ng-repeat="jobListItem in pagedItems[currentPage] | orderBy:sort.sortingOrder:sort.reverse" ng-click="showJobDetails(jobListItem.guid)">
                       <td>{{jobListItem.rscript_name}}</td>
                       <td>{{jobListItem.rscript_channel}}</td>
-                      <td>{{jobListItem.user}}</td>
+                      <td>{{jobListItem.userid}}</td>
                       <td>{{jobListItem.start * 1000 | date:'medium'}}</td>
                       <td>{{jobListItem.end * 1000 | date:'medium'}}</td>
                       <td>{{jobListItem.state}}</td>
@@ -152,7 +149,7 @@
                         <span ng-bind-html="jobinfo.out | to_trustedHTML" class="jobinfo-result"></span>
                         <strong>State: </strong>{{jobinfo.state}}
                         <br/>
-                        <strong>User: </strong>{{jobinfo.user}}
+                        <strong>User: </strong>{{jobinfo.userid}}
                       </div>
                     </div>
                     <div class="modal-footer">

@@ -366,7 +366,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
             $scope.jobinfo = "";
             $scope.jobid = "";
             usSpinnerService.spin('spinner');
-            rScript.execute($scope.currentsnippetObject.name, $scope.currentsnippetObject.channel, $scope.mySercretsInSnippet, $scope.waitFlag, editor.getValue()).then(
+            rScript.execute($scope.currentsnippetObject.name, $scope.currentsnippetObject.channel, $scope.mySercretsInSnippet, $scope.waitFlag, editor.getValue().replace(/#/g,encodeURIComponent('#')).replace(/\n/g,  " /n " )).then(
             function (result) {
               $scope.datalogObject = "";
               if(result.status != 200){
@@ -378,7 +378,11 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                   if($scope.waitFlag == 0){
                     $scope.snippetMsg = $scope.currentsnippetObject.name + " executed successfully.";
                     $timeout(function() {$scope.snippetMsg = "";}, 7000);
-                    $scope.jobid = result.data;
+                    if(result.data != "null"){
+                      $scope.jobid = result.data;
+                    }else{
+                      $scope.jobid = "No job id returned.";
+                    }
                     $('#executeResultModal').modal('show');
                     $scope.showExecuteResultLink = true;
                     $timeout(function() {  
@@ -402,7 +406,11 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
                       $scope.datalogObject = "";
                       splitStringArray = "";
                     }
-                    $scope.jobinfo = result.data;
+                    if(result.data != "null"){
+                      $scope.jobinfo = result.data;
+                    }else{
+                      $scope.jobinfo = { out: "No job result returned."};
+                    }
                     $('#executeResultModal').modal('show');
                     $scope.showExecuteResultLink = true;
                     $timeout(function() {  
@@ -485,7 +493,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
               if(result.data != '"NOTFOUND"' && $scope.mySercretsInSnippet == ""){
                 $scope.mySercretsInSnippet = $scope.currentsnippetObject.secrets + ',';
               }
-              rScript.set($scope.SnippetName, $scope.SnippetChannelddl , editor.getValue().replace(/\n/g,  " /n" ), $scope.mySercretsInSnippet, $scope.secretcodes).then(
+              rScript.set($scope.SnippetName, $scope.SnippetChannelddl , editor.getValue().replace(/\n/g,  " /n " ), $scope.mySercretsInSnippet, $scope.secretcodes).then(
                 function (result) {
                   if(result.status != 200){
                     $scope.errorAlert = result;
