@@ -11,6 +11,10 @@ Help:/Help
 }}
 
 {{menuadmin}}
+
+@block
+
+@row
 @col 3
 {{navigation}}
 @divend
@@ -23,9 +27,12 @@ Help:/Help
         width:46.5% !important;
     }
 }}
+
 @col 9
 {content}
+@divend
 
+#row
 @divend
 @divend
 
