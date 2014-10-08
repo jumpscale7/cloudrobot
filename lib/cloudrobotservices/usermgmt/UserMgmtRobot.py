@@ -56,10 +56,14 @@ class UserMgmtRobot(object):
         robot.addCmdClassObj(cmds)
         return robot
 
+    def getRobotCmds(self):
+        return UserCmds()
+
+
 class UserCmds():
     def __init__(self):
         self.alwaysdie=False
-        self.path="/opt/code/incubaid/default__identities/identities/"
+        self.path="/opt/jumpscale/var/identities/"
         self.aliasses={}
         self.aliasses["alias"]="id.alias"
         self.aliasses["company"]="id.company"
@@ -84,6 +88,10 @@ class UserCmds():
         self.osis_oss_user=j.core.osis.getClientForCategory(self.osis, 'oss', 'user')
         self.channel="user"
         self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
+
+        if not j.system.fs.exists(path=self.path):
+            j.events.inputerror_critical("Make sure your identities are available in: '/opt/jumpscale/var/identities/'")
+            
         
 
     def findUser(self,login,failIfNotExist=True):

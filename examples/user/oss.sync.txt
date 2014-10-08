@@ -1,1 +1,9 @@
+
+!rscript.new
+name=oss.sync
+channel=user
+content=...
+secrets=1234
 !oss.sync
+...
+

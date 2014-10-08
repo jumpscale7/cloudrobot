@@ -6,15 +6,12 @@ import time
 args=sys.argv
 import ujson as json
 import psutil
-
-from IPython import embed
-print "DEBUG NOW oo"
-embed()
-
-
+import JumpScale.lib.jail
 from urlparse import urlparse, parse_qs
 
-example="http://$server?user=auser&session=mysession&secret=1234&cmd='ls /opt'"
+from JumpScale import j
+
+example="http://$server?user=auser&session=mysession&secret=1234&cmd='ls /opt'&new=1"
 
 o=urlparse(args[1])
     
@@ -45,21 +42,26 @@ class Session():
         if pid not in self.pids:
             self.pids.append(pid)
 
+    def save(self):
+        name="%s__%s"%(args2["user"],args2["session"])
+        r.hset("robot:sessions", name, json.dumps(session.__dict__))
+
+
 import redis
-r = redis.StrictRedis(host='localhost', port=7768)
+r= redis.StrictRedis(host='localhost', port=7768)
 
 name="%s__%s"%(args2["user"],args2["session"])
-
 if r.hexists("robot:sessions", name):
     sessiondict=json.loads(r.hget("robot:sessions", name))
     session=Session()
     session.__dict__.update(sessiondict)
     session.addPid(os.getpid())
-    po=psutil.Process(os.getpid())    
-    session.addPid(po.parent.pid) #need to remove parent as well                     
-
+    po=psutil.Process(os.getpid()) 
+    session.addPid(po.parent().pid) #need to remove parent as well
 else:
     session=Session()
+
+session.save()
 
 homepath="/home/%s"%args2["user"]
 secrpath="%s/.secret"%homepath
@@ -80,28 +82,39 @@ if args2["secret"]<>secret:
     print "ERROR: secret not correct."
     sys.exit()
   
-r.hset("robot:sessions", name, json.dumps(session.__dict__))
 
-# _stderr = sys.stderr
-# _stdout = sys.stdout
+sessions=j.tools.jail.listSessions(user=user)
 
-# null = open(os.devnull,'wb')
-# sys.stdout = null
-# sys.stderr = null
+#check if session exist if not create
+if args2["session"] not in sessions or args2.has_key("new"):
+        
+    _stderr = sys.stderr
+    _stdout = sys.stdout
 
-# os.system("tmux kill-session -t %s"%name)
-# os.system("tmux new-session -d -s %s  js"%name)
-# os.system("tmux set-option -t %s status off"%name)
-# os.system("tmux send -t %s clear ENTER"%name)
+    null = open(os.devnull,'wb')
+    sys.stdout = null
+    sys.stderr = null
 
-# sys.stderr=_stderr
-# sys.stdout=_stdout
+    os.system("sudo -u %s -i tmux kill-session -t %s"%(user,args2["session"]))
+    os.system("sudo -u %s -i tmux new-session -d -s %s sh"%(user,args2["session"]))
+    os.system("sudo -u %s -i tmux set-option -t %s status off"%(user,args2["session"]))
+    os.system("sudo -u %s -i tmux send -t %s clear ENTER"%(user,args2["session"]))
+
+    sys.stderr=_stderr
+    sys.stdout=_stdout
 
 # print "Start Robot Session"
-
 # print r.hget("robot:sessions", name)
 
-cmd="sudo -P -u %s tmux a -t %s"%(user,user)
+logdir="/tmp/tmuxsessions"
+# j.system.process.execute("chmod 777 %s"%logdir)
+cmd="sudo -u %s -i tmux pipe-pane -o -t %s 'cat >%s/%s_%s_%s_%s.txt'"%(user,args2["session"],logdir,j.base.time.getTimeEpoch(),user,args2["session"],os.getpid())
+os.system(cmd)
+
+if args2.has_key("cmd"):
+    j.tools.jail.send2session(user,args2["session"],args2["cmd"])
+
+cmd="sudo -u %s -i tmux a -t %s"%(user,args2["session"])
 print cmd
 os.system(cmd)
 
