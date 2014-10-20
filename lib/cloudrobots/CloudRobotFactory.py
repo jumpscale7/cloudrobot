@@ -111,7 +111,7 @@ class Session():
         #now find vars
         state="init"
         lastvar=""
-        msg = msg.replace(' /n ', '\n')
+        msg = msg.replace(' /n', '\n')
         for line in msg.split("\n"):
             line=line.strip()
             if line=="" or line[0]=="#":

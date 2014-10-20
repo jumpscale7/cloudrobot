@@ -366,7 +366,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
             $scope.jobinfo = "";
             $scope.jobid = "";
             usSpinnerService.spin('spinner');
-            rScript.execute($scope.currentsnippetObject.name, $scope.currentsnippetObject.channel, $scope.mySercretsInSnippet, $scope.waitFlag, editor.getValue().replace(/#/g,encodeURIComponent('#')).replace(/\n/g,  " /n " )).then(
+            rScript.execute($scope.currentsnippetObject.name, $scope.currentsnippetObject.channel, $scope.mySercretsInSnippet, $scope.waitFlag, editor.getValue().replace(/#/g,encodeURIComponent('#')).replace(/\n/g,  " /n" )).then(
             function (result) {
               $scope.datalogObject = "";
               if(result.status != 200){
@@ -493,7 +493,7 @@ angular.module('robotAngularApp', ['angularTreeview', 'ngAnimate', 'ngSanitize',
               if(result.data != '"NOTFOUND"' && $scope.mySercretsInSnippet == ""){
                 $scope.mySercretsInSnippet = $scope.currentsnippetObject.secrets + ',';
               }
-              rScript.set($scope.SnippetName, $scope.SnippetChannelddl , editor.getValue().replace(/\n/g,  " /n " ), $scope.mySercretsInSnippet, $scope.secretcodes).then(
+              rScript.set($scope.SnippetName, $scope.SnippetChannelddl , editor.getValue().replace(/\n/g,  " /n"), $scope.mySercretsInSnippet, $scope.secretcodes).then(
                 function (result) {
                   if(result.status != 200){
                     $scope.errorAlert = result;

@@ -48,9 +48,10 @@ if "user" in robots2:
 
 import JumpScale.lib.cloudrobotservices.robotmgmt
 import JumpScale.lib.cloudrobotservices.test
+import JumpScale.lib.cloudrobotservices.oss
 robots["test"]= j.robots.test.getRobot()
 robots["cloudrobot"]= j.robots.test.getRobot()
-robots["oss"]= j.robots.test.getRobot()
+robots["oss"]= j.robots.oss.getRobot()
 robots["mgmt"]= j.robots.mgmt.getRobot()
 
 
