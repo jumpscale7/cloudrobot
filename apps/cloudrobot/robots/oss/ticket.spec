@@ -1,0 +1,113 @@
+
+- create (c,n,new)
+-- id
+-- name
+-- description
+-- priority          #level 0-4 (4 is most urgent)
+-- project           #link to project
+-- project_name
+-- type
+-- parent
+-- parent_name
+-- depends           #this task depends on
+-- depends_names
+-- deadline          #epoch of when task needs to be done
+-- duplicate         #list of duplicates to this issue
+-- duplicate_names
+-- taskowner         #owner of task (user)
+-- taskowner_name    #owner of task (user)
+-- source            #owner of task (user)
+-- source_name       #name of user where request came from (can be email, username, ...)
+-- sprint
+-- sprint_name
+-- organization      # link to organization if any
+-- organization_name
+-- nextstepdate      #date for next day to continue with this ticket
+-- workflow          #current active workflow
+-- job_status        #values are:
+-- jobs              #link to workflows
+-- time_created
+-- time_lastmessage
+-- time_lastresponse
+-- time_closed
+-- messages          # reference to message
+-- comments          #reference to comments
+-- datasources       #source(s) where data comes from (reference)
+-- acl               #dict where key is name of group; value is R/W/E (E=Execute)
+-- params            #json representation of dict which has all arguments required for this ticket
+
+- update (u)
+-- guid
+-- id
+-- name
+-- description
+-- priority          #level 0-4 (4 is most urgent)
+-- project           #link to project
+-- project_name
+-- type
+-- parent
+-- parent_name
+-- depends           #this task depends on
+-- depends_names
+-- deadline          #epoch of when task needs to be done
+-- duplicate         #list of duplicates to this issue
+-- duplicate_names
+-- taskowner         #owner of task (user)
+-- taskowner_name    #owner of task (user)
+-- source            #owner of task (user)
+-- source_name       #name of user where request came from (can be email, username, ...)
+-- sprint
+-- sprint_name
+-- organization      # link to organization if any
+-- organization_name
+-- nextstepdate      #date for next day to continue with this ticket
+-- workflow          #current active workflow
+-- job_status        #values are:
+-- jobs              #link to workflows
+-- time_created
+-- time_lastmessage
+-- time_lastresponse
+-- time_closed
+-- messages          # reference to message
+-- comments          #reference to comments
+-- datasources       #source(s) where data comes from (reference)
+-- acl               #dict where key is name of group; value is R/W/E (E=Execute)
+-- params            #json representation of dict which has all arguments required for this ticket
+
+- export                  #produce text which will allow import
+-- filter (f)             #is filter which is mongodb querystr
+-- format                 #if verbose=3: std json (can also yaml) otherwise this arg is not valid
+
+- list (l)
+-- max                    #max amount of items
+-- start                  #startpoint e.g. 10 is id
+-- filter (f)             #is filter which is mongodb querystr in tag format e.g. org:myorg country:belgium price:<10
+-- sort (s)               #comma separated list of sort (optional)
+-- fields                 #comma separated list of fields to show (optional)
+
+- get                     #produces txt which can be used by robot to input 
+-- guid              #optional,guid gets priority if specified
+-- id                #optional
+-- name              #optional, last priority if specified (id & guid before)
+-- format                 #default robot format (other supported formats are json & yaml)
+
+- delete (d,del)
+-- guid              #optional,guid gets priority if specified
+-- id                #optional
+-- name              #optional, last priority if specified (id & guid before)
+
+- comment
+-- guid              #optional,guid gets priority if specified
+-- id                #optional
+-- name              #optional, last priority if specified (id & guid before)
+-- comment
+-- created
+-- author
+
+- acl
+-- guid              #optional,guid gets priority if specified
+-- id                #optional
+-- name              #optional, last priority if specified (id & guid before)
+-- acl                   #as tags 'admin:RW guest:R'
+
+        

@@ -28,15 +28,14 @@ class TxtRobotFactory(object):
         return TxtRobot(definition)
 
 class TxtRobot():
-    def __init__(self,definition):
-        self.definition=definition
+    def __init__(self,robotpath):
+        self.robotpath=robotpath
         self.cmdAlias={}
         self.entityAlias={}
         self.entities=[]
         self.cmds={}
         self.cmdobj=None
-        self._initCmds(definition)
-        self.cmdsToImpl={}
+        self._initCmds()
         self.help=TxtRobotHelp()
         # self.snippet = TxtRobotSnippet()
         self.redis=j.clients.redis.getRedisClient("localhost",7768)
@@ -53,8 +52,15 @@ class TxtRobot():
 
         
 
-    def _initCmds(self,definition):
+    def _initCmds(self):
 
+        from IPython import embed
+        print "DEBUG NOW ooo"
+        embed()
+        
+
+
+    def _initCmdsFor1Ob(self,definition):
         for line in definition.split("\n"):
             # print line
             line=line.strip()

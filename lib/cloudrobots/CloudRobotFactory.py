@@ -9,6 +9,7 @@ import JumpScale.baselib.redisworker
 import JumpScale.grid.osis
 import yaml
 import sys
+from OSISObjManipulatorClass import OSISObjManipulatorClass
 
 class Empty():
     pass
@@ -413,7 +414,6 @@ class Action():
     __str__=__repr__
 
 
-
 class CloudRobotFactory(object):
     def __init__(self):
         self.hrd=None
@@ -422,19 +422,23 @@ class CloudRobotFactory(object):
 
     def init(self): 
         if not self._inited:
-            self._init()
+            self.init()
             self._inited=True
 
+    def getOSISObjManipulatorClass(self):
+        return OSISObjManipulatorClass
+
     def _init(self):
-        # j.cloudrobot=Empty()
- 
-        self.redisq_xmpp=j.clients.redis.getRedisQueue("127.0.0.1", 7768,"xmpp")
-        ppath="%s/apps/cloudrobot/"%j.dirs.baseDir
-        if ppath not in sys.path:
-            sys.path.append(ppath)
+        # j.cloudrobot=Empty()        
+
+        # ppath="%s/apps/cloudrobot/"%j.dirs.baseDir
+        # if ppath not in sys.path:
+        #     sys.path.append(ppath)
+
         # self.robotspath="%s/%s"%(ppath,"robots.py")
-        from robots import robots
-        self.robots=robots
+        # from robots import robots
+        # self.robots=robots
+
         if self.hrd==None: #hrd is loaded where we import robots
             raise RuntimeError("hrd not specified yet.")
         osisinstance=self.hrd.get("cloudrobot.osis.connection")
@@ -444,29 +448,31 @@ class CloudRobotFactory(object):
         self.osis_oss_user = j.core.osis.getClientForCategory(self.osis, 'oss', 'user')
         self.osis_system_user = j.core.osis.getClientForCategory(self.osis, 'system', 'user')
         self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
-        self.domain=self.hrd.get("cloudrobot.mail.domain")
+        
 
     def startMailServer(self):
-        self._init()
+        self.init()
+        self.domain=self.hrd.get("cloudrobot.mail.domain")
         from .MailRobot import MailRobot
         robot = MailRobot(('0.0.0.0', 25),hrd_instance=self.hrd)
         print "start server on port:25"
         robot.serve_forever()
 
     def startHTTP(self, addr='0.0.0.0', port=8099):
-        self._init()
+        self.init()
         from .HTTPRobot import HTTPRobot
         robot=HTTPRobot(addr=addr, port=port)
         robot.start()
 
     def startXMPPRobot(self,username,passwd):
-        self._init()
+        self.init()
+        self.redisq_xmpp=j.clients.redis.getRedisQueue("127.0.0.1", 7768,"xmpp")
         from .XMPPRobot import XMPPRobot        
         robot=XMPPRobot(username=username, passwd=passwd)
         robot.init()     
 
     def startFileRobot(self):
-        self._init()
+        self.init()
         robot=FileRobot()
         robot.start()
 
