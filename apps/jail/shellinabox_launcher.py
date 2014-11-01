@@ -48,7 +48,7 @@ class Session():
 
 
 import redis
-r= redis.StrictRedis(host='localhost', port=7768)
+r= redis.StrictRedis(host='localhost', port=9999)
 
 name="%s__%s"%(args2["user"],args2["session"])
 if r.hexists("robot:sessions", name):

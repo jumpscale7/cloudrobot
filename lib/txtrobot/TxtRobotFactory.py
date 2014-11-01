@@ -38,7 +38,7 @@ class TxtRobot():
         self._initCmds()
         self.help=TxtRobotHelp()
         # self.snippet = TxtRobotSnippet()
-        self.redis=j.clients.redis.getRedisClient("localhost",7768)
+        self.redis=j.clients.redis.getRedisClient("localhost",9999)
         self.codeblocks={}
         alias={}
         alias["l"]="login"

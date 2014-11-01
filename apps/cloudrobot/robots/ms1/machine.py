@@ -9,7 +9,7 @@ import JumpScale.lib.ms1
 class Cmds():
 
     # def __init__(self):
-    #     self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
+    #     self.redis=j.clients.redis.getRedisClient("127.0.0.1", 9999)
 
     def new(self, **args):
         

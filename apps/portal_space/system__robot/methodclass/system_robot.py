@@ -20,7 +20,7 @@ class system_robot(j.code.classGetBase()):
         self.osis_rscript=j.core.osis.getClientForCategory(self.osis, 'robot', 'rscript')
         self.osis_job=j.core.osis.getClientForCategory(self.osis, 'robot', 'job')
         self.osis_user=j.core.osis.getClientForCategory(self.osis, 'system', 'user')        
-        self.redis=j.clients.redis.getGeventRedisClient('127.0.0.1', 7768)
+        self.redis=j.clients.redis.getGeventRedisClient('127.0.0.1', 9999)
         j.servers.cloudrobot.init()
         self.robots=j.servers.cloudrobot.robots
 

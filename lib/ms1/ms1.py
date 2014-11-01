@@ -49,7 +49,7 @@ class MS1(object):
     def __init__(self):
         self.secret = ''
         self.IMAGE_NAME = 'Ubuntu 14.04 (JumpScale)'
-        self.redis_cl = j.clients.redis.getGeventRedisClient('localhost', 7768)
+        self.redis_cl = j.clients.redis.getGeventRedisClient('localhost', 9999)
         self.stdout=Output()
         self.stdout.ms1=self
         self.stdout.prevout=sys.stdout

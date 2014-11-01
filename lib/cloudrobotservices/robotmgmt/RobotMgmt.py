@@ -31,5 +31,5 @@ class RobotMgmt(object):
 class RobotMgmtCmds():
     def __init__(self):
         self.channel="mgmt"
-        self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)        
+        self.redis=j.clients.redis.getRedisClient("127.0.0.1", 9999)        
 

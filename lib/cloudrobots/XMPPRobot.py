@@ -51,8 +51,8 @@ class XMPPRobot(sleekxmpp.ClientXMPP):
         self.register_plugin('xep_0060') # PubSub
         self.register_plugin('xep_0199') # XMPP Ping        
 
-        self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
-        self.redisq=j.clients.redis.getRedisQueue("127.0.0.1", 7768,"xmpp")
+        self.redis=j.clients.redis.getRedisClient("127.0.0.1", 9999)
+        self.redisq=j.clients.redis.getRedisQueue("127.0.0.1", 9999,"xmpp")
 
         self.userstate={}
 

@@ -220,7 +220,7 @@ class Job():
         return msg
 
     def _getQueue(self):    
-        queue=j.clients.redis.getRedisQueue("127.0.0.1", 7768, "robot:%s" % self.model.guid)
+        queue=j.clients.redis.getRedisQueue("127.0.0.1", 9999, "robot:%s" % self.model.guid)
         return queue
 
     def _executePrepare(self):
@@ -447,7 +447,7 @@ class CloudRobotFactory(object):
         self.osis_robot_action = j.core.osis.getClientForCategory(self.osis, 'robot', 'action')
         self.osis_oss_user = j.core.osis.getClientForCategory(self.osis, 'oss', 'user')
         self.osis_system_user = j.core.osis.getClientForCategory(self.osis, 'system', 'user')
-        self.redis=j.clients.redis.getRedisClient("127.0.0.1", 7768)
+        self.redis=j.clients.redis.getRedisClient("127.0.0.1", 9999)
         
 
     def startMailServer(self):
@@ -466,7 +466,7 @@ class CloudRobotFactory(object):
 
     def startXMPPRobot(self,username,passwd):
         self.init()
-        self.redisq_xmpp=j.clients.redis.getRedisQueue("127.0.0.1", 7768,"xmpp")
+        self.redisq_xmpp=j.clients.redis.getRedisQueue("127.0.0.1", 9999,"xmpp")
         from .XMPPRobot import XMPPRobot        
         robot=XMPPRobot(username=username, passwd=passwd)
         robot.init()     
